@@ -1,0 +1,54 @@
+services:
+
+  db:
+    image: bitnami/postgresql
+    container_name: workers_db
+    env_file:
+      - .env
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRESQL_MAX_CONNECTIONS=10000
+    volumes:
+      - postgres_data:/bitnami/postgresql
+    networks:
+      - workers_network
+
+  redis:
+    image: redis:alpine
+    container_name: workers_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - workers_network
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--maxclients", "100000"]
+
+  api_service:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: workers_api_service
+    restart: always
+    depends_on:
+      - db
+      - redis
+    command: sh /app/utils/start_api.sh
+    ports:
+      - "8088:8000"
+    networks:
+      - workers_network
+
+networks:
+  workers_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    name: postgres_data
+  redis_data:
+    name: redis_data
