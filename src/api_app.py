@@ -11,6 +11,10 @@ from starlette.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 
+from api.controllers.user_controller import router as user_router
+from api.controllers.tasks_controller import router as tasks_router
+from api.controllers.verify_user_controller import router as verify_user_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -49,3 +53,6 @@ app = FastAPI(
     middleware=middleware,
 )
 
+app.include_router(user_router)
+app.include_router(tasks_router)
+app.include_router(verify_user_router)
