@@ -43,6 +43,21 @@ services:
     networks:
       - workers_network
 
+  admin_service:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: workers_admin_service
+    command: sh /app/utils/start_admin.sh
+    ports:
+      - "8001:8001"
+    networks:
+      - workers_network
+    logging:
+      driver: "json-file"
+    restart: always
+
+
 networks:
   workers_network:
     driver: bridge
