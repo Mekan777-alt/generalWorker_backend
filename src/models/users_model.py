@@ -12,6 +12,9 @@ class Users(Base):
     firebase_uid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True)
     firstName = Column(String, nullable=True)
     lastName = Column(String, nullable=True)
+    phoneNumber = Column(String, nullable=True)
+    location = Column(String, nullable=True)
+    aboutMySelf = Column(String, nullable=True)
     photo = Column(String, nullable=True)
 
     roles = relationship("Role", secondary="user_roles", back_populates="users")
