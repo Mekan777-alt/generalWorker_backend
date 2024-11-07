@@ -12,7 +12,7 @@ class UserResponseDTO(BaseModel):
     roles: Optional[List[str]] = Field(None, description="Список ролей, связанных с пользователем")
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class UserPartialUpdateDTO(BaseModel):
     firstName: Optional[str] = Field(None, description="Имя пользователя")

@@ -35,9 +35,17 @@ class RedisSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding='utf-8', extra='ignore')
 
 
+class FernetConfiguration(BaseSettings):
+    fernet_key: str = Field(..., validation_alias='FERNET_KEY')  # Ключ от шифрование
+    fernet_IV: str = Field(..., validation_alias='FERNET_IV')  # IV
+
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding='utf-8', extra='ignore')
+
+
 class Settings(BaseSettings):
     database_settings: DBSettings = DBSettings()
     redis_settings: RedisSettings = RedisSettings()
+    fernet_settings: FernetConfiguration = FernetConfiguration()
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding='utf-8', extra='ignore')
 

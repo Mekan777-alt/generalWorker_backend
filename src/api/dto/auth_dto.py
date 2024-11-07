@@ -1,0 +1,39 @@
+from pydantic import BaseModel, ValidationError, field_validator, Field
+import re
+
+
+class BasicTokenDTO(BaseModel):
+    token: str = Field(..., examples=["Basic <KEY>"], description="Токен авторизации")
+
+
+class UserInfoDTO(BaseModel):
+    id: int = Field(..., examples=[1], description='id пользователя')
+    phoneNumber: str = Field(..., examples=['+71234567890'], description='Номер телефона')
+
+
+class UserResponse(BaseModel):
+    user: UserInfoDTO
+    token: BasicTokenDTO
+
+    class Config:
+        from_attributes = True
+
+
+class VerifyCode(BaseModel):
+    verificationCode: str = Field(..., examples=["123456"])
+
+
+class AuthResponse(BaseModel):
+    message: str = Field(..., examples=["SMS отправлено успешно."],
+                         description="При успешной отправки СМС возвращает ответ")
+
+
+class AuthUserDTO(BaseModel):
+    phoneNumber: str = Field(..., examples=["+71234567890"], description="Номер телефона в формате +7 и 10 цифр")
+
+    @field_validator('phone_number')
+    def validate_phone_number(cls, v):
+        # Проверка на соответствие формату +7 и наличие 11 цифр
+        if not re.fullmatch(r'^\+7\d{10}$', v):
+            raise ValidationError('Номер телефона должен начинаться с +7 и содержать 11 цифр')
+        return v

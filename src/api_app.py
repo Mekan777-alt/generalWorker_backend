@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     )
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
 
-    cred = credentials.Certificate("src/generalworker-ee270-firebase-adminsdk-b3xb3-d5c5a122f0.json")
+    cred = credentials.Certificate("src/generalworker-ee270-firebase-adminsdk-b3xb3-03ced2dbb9.json")
     firebase_admin.initialize_app(cred)
 
     yield
