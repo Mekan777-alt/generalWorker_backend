@@ -4,8 +4,7 @@ from starlette import status
 from api.services.tasks_service import get_tasks_service, TasksService
 
 router = APIRouter(
-    tags=['Задачи'],
-    prefix='/api',
+    tags=['Задачи']
 )
 
 @router.get('/tasks', summary="Возвращает массив задач для исполнителя", status_code=status.HTTP_200_OK)

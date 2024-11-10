@@ -6,8 +6,7 @@ from api.dto.auth_dto import AuthUserDTO, AuthResponse, UserResponse, VerifyCode
 from api.services.auth_service import AuthService, get_auth_service
 
 router = APIRouter(
-    tags=["Авторизация"],
-    prefix="/api",
+    tags=["Авторизация"]
 )
 
 

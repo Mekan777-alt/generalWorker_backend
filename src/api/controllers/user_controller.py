@@ -7,8 +7,7 @@ from starlette import status
 from api.services.user_service import get_user_service, UserService
 
 router = APIRouter(
-    tags=['Пользователи'],
-    prefix='/api',
+    tags=['Пользователи']
 )
 
 @router.get('/user', status_code=status.HTTP_200_OK, summary="Возвращает информацию о пользователе",
