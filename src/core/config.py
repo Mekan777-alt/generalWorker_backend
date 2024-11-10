@@ -18,7 +18,17 @@ class DBSettings(BaseSettings):
         return (f'postgresql+asyncpg://{self.user}:{self.password}@{self.host}'
                 f':{self.port}/{self.name}')
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding='utf-8', extra='ignore')\
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding='utf-8', extra='ignore')
+
+
+class DevinoTelecomSettings(BaseSettings):
+    devino_telecom_api_url: str = Field('https://integrationapi.net/rest/v2',
+                                        validation_alias='DEVINO_TELECOM_API_URL')
+    devino_login: str = Field(..., validation_alias='DEVINO_LOGIN')
+    devino_password: str = Field(..., validation_alias='DEVINO_PASSWORD')
+
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding='utf-8', extra='ignore')
+
 
 
 class RedisSettings(BaseSettings):
@@ -35,6 +45,13 @@ class RedisSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding='utf-8', extra='ignore')
 
 
+class JWTSettings(BaseSettings):
+    secret_key: str = Field("your_secret_key", min_length=8, max_length=64)
+    algorithm: str = Field("HS256", max_length=64)
+
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding='utf-8', extra='ignore')
+
+
 class FernetConfiguration(BaseSettings):
     fernet_key: str = Field(..., validation_alias='FERNET_KEY')  # Ключ от шифрование
     fernet_IV: str = Field(..., validation_alias='FERNET_IV')  # IV
@@ -46,6 +63,8 @@ class Settings(BaseSettings):
     database_settings: DBSettings = DBSettings()
     redis_settings: RedisSettings = RedisSettings()
     fernet_settings: FernetConfiguration = FernetConfiguration()
+    devino_telecom_settings: DevinoTelecomSettings = DevinoTelecomSettings()
+    jwt_settings: JWTSettings = JWTSettings()
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding='utf-8', extra='ignore')
 

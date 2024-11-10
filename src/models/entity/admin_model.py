@@ -6,7 +6,7 @@ from argon2.exceptions import VerifyMismatchError
 ph = PasswordHasher()
 
 
-class Admin(Base):
+class AdminModel(Base):
     __tablename__ = 'auth_admin'
 
     id = Column(Integer, primary_key=True)

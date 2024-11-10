@@ -3,18 +3,18 @@ from sqlalchemy import select
 from database.session import get_session
 from fastapi import Depends
 
-from models import Users
+from models.entity import UsersModel
 
 
 class UserRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_user_info_by_uid(self, uid: str) -> Users:
-        result = await self.session.execute(select(Users).where(Users.firebase_uid == uid))
+    async def get_user_info_by_uid(self, user_id: int) -> UsersModel:
+        result = await self.session.execute(select(UsersModel).where(UsersModel.firebase_uid == uid))
         return result.scalar_one_or_none()
 
-    async def update_user_info(self, user: Users) -> Users:
+    async def update_user_info(self, user: UsersModel) -> UsersModel:
         await self.session.commit()
         await self.session.refresh(user)
         return user

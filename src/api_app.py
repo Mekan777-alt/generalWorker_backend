@@ -1,19 +1,16 @@
-import firebase_admin
-
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
-from firebase_admin import credentials
 from redis import asyncio as aioredis
 from fastapi import FastAPI
 from starlette.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 
+from api.controllers.auth_controller import router as auth_router
 from api.controllers.user_controller import router as user_router
 from api.controllers.tasks_controller import router as tasks_router
-from api.controllers.verify_user_controller import router as verify_user_router
 
 
 @asynccontextmanager
@@ -27,9 +24,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         decode_responses=True
     )
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
-
-    cred = credentials.Certificate("src/generalworker-ee270-firebase-adminsdk-b3xb3-03ced2dbb9.json")
-    firebase_admin.initialize_app(cred)
 
     yield
 
@@ -55,4 +49,4 @@ app = FastAPI(
 
 app.include_router(user_router)
 app.include_router(tasks_router)
-app.include_router(verify_user_router)
+app.include_router(auth_router)

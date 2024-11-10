@@ -1,15 +1,16 @@
 import random
-import base64
+from typing import Optional, Tuple
 from urllib.parse import urlencode, quote_plus
-
 import aiohttp
-from api.dependency.encryption import encrypt_phone, decrypt_phone
-from datetime import datetime, timedelta
-from models import Users
+import jwt
+
+from api.dependency.encryption import encrypt_phone
+from datetime import datetime, timedelta, timezone
+from models.entity import AuthModel, UsersModel
 from fastapi import Depends, HTTPException
 from starlette import status
 from api.repositories.auth_repository import get_auth_repository, AuthRepository
-from api.dto.auth_dto import VerifyCode, UserResponse, AuthUserDTO, UserInfoDTO, BasicTokenDTO
+from api.dto.auth_dto import VerifyCode, AuthUserDTO, TokensCreateResponseDTO, AuthRefreshTokenDTO
 from core.config import settings
 
 
@@ -20,26 +21,44 @@ class AuthService:
 
     async def auth_user(self, request: AuthUserDTO):
         encrypted_phone = await encrypt_phone(request.phoneNumber)
-        user = await self.auth_repository.get_user_by_phone_number(encrypted_phone)
-
+        auth = await self.auth_repository.get_user_by_phone_number(encrypted_phone)
         verification_code = str(random.randint(100000, 999999))
-        send_message = await self.__send_message(request.phoneNumber[1:], verification_code)
 
-        if not send_message:
-            raise HTTPException(
-                detail="Не удалось отправить SMS",
-                status_code=status.HTTP_400_BAD_REQUEST
+
+        if not auth:
+
+            user = AuthModel(
+                phoneNumber=encrypted_phone,
+                otpCode=verification_code,
+                otpExpiry=datetime.utcnow() + timedelta(minutes=5),
             )
 
-        user.verifyCode = verification_code
-        user.codeCreatedAt = datetime.utcnow()
+            auth_model = await self.auth_repository.create_user(user)
 
-        await self.auth_repository.update_user(user)
+            profile = UsersModel(
+                auth_id=auth_model.id
+            )
 
-        return {"message": "SMS отправлено успешно."}
+            await self.auth_repository.create_profile(profile)
+            return VerifyCode(verificationCode=verification_code)
+
+        # send_message = await self.__send_message(request.phoneNumber[1:], verification_code)
+        #
+        # if not send_message:
+        #     raise HTTPException(
+        #         detail="Не удалось отправить SMS",
+        #         status_code=status.HTTP_400_BAD_REQUEST
+        #     )
+
+        auth.otpCode = verification_code
+        auth.otpExpiry = datetime.utcnow() + timedelta(minutes=5)
+
+        await self.auth_repository.update_user(auth)
+
+        return VerifyCode(verificationCode=verification_code)
 
     async def __send_message(self, phone_number: str, verification_code: str):
-        url = f"{settings.devino_settings.devino_telecom_api_url}/Sms/Send"
+        url = f"{settings.devino_telecom_settings.devino_telecom_api_url}/Sms/Send"
         params = {
             "Login": settings.devino_settings.devino_login,
             "Password": settings.devino_settings.devino_password,
@@ -61,36 +80,85 @@ class AuthService:
                     return False
 
     async def verify_code(self, request: VerifyCode):
-        user = await self.auth_repository.get_user_by_verify_code(request.verificationCode)
+        auth = await self.auth_repository.get_user_by_verify_code(request.verificationCode)
 
-        if not user:
+        if not auth:
             raise HTTPException(detail="Пользователь не найден", status_code=status.HTTP_404_NOT_FOUND)
 
-        if user.verifyCode != request.verificationCode:
+        if auth.otpCode != request.verificationCode:
             raise HTTPException(detail="Неверный код подтверждения", status_code=status.HTTP_400_BAD_REQUEST)
 
-        if datetime.utcnow() > user.codeCreatedAt + timedelta(minutes=5):
+        if datetime.utcnow() > auth.otpExpiry:
             raise HTTPException(detail="Код подтверждения истек", status_code=status.HTTP_400_BAD_REQUEST)
 
-        token = await self.__generate_token(user)
+        access_token, refresh_token = await self.__create_tokens({"id": auth.id,
+                                                                  "phoneNumber": auth.phoneNumber
+                                                                  })
 
-        user.isActive = True
-        user.isRegistered = True
-        user.verifyCode = None
-        user.codeCreatedAt = None
+        return TokensCreateResponseDTO(access_token=access_token, refresh_token=refresh_token)
 
-        await self.auth_repository.update_user(user)
+    async def __create_tokens(self, data: dict) -> Tuple[str, str]:
+        # Время жизни токенов
+        access_expires_delta = timedelta(hours=1)  # Время жизни access_token
+        refresh_expires_delta = timedelta(days=7)  # Время жизни refresh_token
 
-        return {"message": "Success"}
+        # Создаем access_token
+        access_payload = data.copy()
+        access_payload.update({"exp": datetime.utcnow() + access_expires_delta})
+        access_token = jwt.encode(access_payload, settings.jwt_settings.secret_key,
+                                  algorithm=settings.jwt_settings.algorithm)
 
+        # Создаем refresh_token
+        refresh_payload = data.copy()
+        refresh_payload.update({"exp": datetime.utcnow() + refresh_expires_delta})
+        refresh_token = jwt.encode(refresh_payload, settings.jwt_settings.secret_key,
+                                   algorithm=settings.jwt_settings.algorithm)
 
-    async def __generate_token(self, user: Users):
-        token_str = f"{user.id}:{user.phoneNumber}"
+        return access_token, refresh_token
 
-        token_bytes = token_str.encode('ascii')
-        base64_bytes = base64.b64encode(token_bytes)
+    async def __decode_token(self, token: str) -> Optional[dict]:
+        try:
+            payload = jwt.decode(token, settings.jwt_settings.secret_key, algorithms=[settings.jwt_settings.algorithm])
+            return payload
+        except jwt.ExpiredSignatureError:
+            return None
+        except jwt.InvalidTokenError:
+            return None
 
-        return base64_bytes.decode('ascii')
+    async def refresh_token_service(self, data: AuthRefreshTokenDTO):
+        # Декодируем токен
+        decode_refresh_token = await self.__decode_token(data.refresh_token)
+
+        # Проверяем, что токен был успешно декодирован
+        if decode_refresh_token is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Неверный или просроченный токен обновления.",
+            )
+
+        # Проверка на истечение времени токена
+        current_timestamp = datetime.now(tz=timezone.utc).timestamp()
+        if decode_refresh_token['exp'] < current_timestamp:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Токен обновления истек."
+            )
+
+        # Проверка, что пользователь из токена существует и данные совпадают
+        user_from_token = await self.auth_repository.check_user_from_token(
+            auth_id=decode_refresh_token.get('id'), phone_number=decode_refresh_token.get('phoneNumber'))
+        if user_from_token is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Пользователь не найден или данные токена не совпадают."
+            )
+
+        # Генерируем новые токены (например, создаем новые access и refresh токены)
+        user_data = {"id": user_from_token.id, "phoneNumber": user_from_token.phoneNumber}
+        new_access_token, new_refresh_token = await self.__create_tokens(user_data)
+
+        # Возвращаем новые токены
+        return TokensCreateResponseDTO(access_token=new_access_token, refresh_token=new_refresh_token)
 
 
 def get_auth_service(auth_repository: AuthRepository = Depends(get_auth_repository)):

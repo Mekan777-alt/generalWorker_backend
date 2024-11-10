@@ -1,9 +1,9 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, ForeignKey
 
 from src.database.base import Base
 
 
-class UserRoles(Base):
+class UserRolesModel(Base):
     __tablename__ = 'user_roles'
 
     user_id = Column(Integer, ForeignKey('users.id'), primary_key=True)

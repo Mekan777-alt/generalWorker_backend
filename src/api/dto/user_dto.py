@@ -2,7 +2,6 @@ from typing import Optional, List
 from pydantic import BaseModel, Field
 
 class UserResponseDTO(BaseModel):
-    id: Optional[int] = Field(None, description="Уникальный идентификатор пользователя")
     firstName: Optional[str] = Field(None, description="Имя пользователя")
     lastName: Optional[str] = Field(None, description="Фамилия пользователя")
     phoneNumber: Optional[str] = Field(None, description="Телефонный номер пользователя")
