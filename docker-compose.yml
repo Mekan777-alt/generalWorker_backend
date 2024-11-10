@@ -39,7 +39,7 @@ services:
       - redis
     command: sh /app/utils/start_api.sh
     ports:
-      - "8088:8000"
+      - "8000:8000"
     networks:
       - workers_network
 
