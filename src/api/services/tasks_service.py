@@ -1,3 +1,5 @@
+import locale
+
 from datetime import datetime, timezone
 from models.enums import TasksStatusEnum
 from fastapi import Depends, HTTPException
@@ -5,6 +7,7 @@ from starlette import status
 from api.dto.tasks_dto import TaskRequestDTO, TaskResponseDTO
 from api.repositories.tasks_repository import get_tasks_repository, TasksRepository
 from models.entity import TasksModel
+from babel.dates import format_date
 
 class TasksService:
     def __init__(self, tasks_repository: TasksRepository):
@@ -18,16 +21,19 @@ class TasksService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Task not found",
             )
+
         return TaskResponseDTO(
             id=task.id,
             taskName=task.name,
             taskDescription=task.description,
             taskPrice=task.price,
-            taskTerm=task.term_to,
+            taskTerm=self.__format_duration(task.term_from, task.term_to),
+            taskCreated=self.__format_date(task.term_from),
             taskCity=task.location,
             isPublic=task.is_public,
             taskStatus=task.status
         )
+
 
     async def get_tasks_for_customer(self, current_user: dict):
         auth_id = int(current_user.get('id'))
@@ -134,6 +140,25 @@ class TasksService:
             taskCity=task.location,
             isPublic=task.is_public
         )
+
+    def __format_duration(self, term_from, term_to):
+        # Рассчитываем разницу между датами
+        duration = term_to - term_from
+
+        # Получаем дни и оставшиеся часы
+        days = duration.days
+        hours = duration.seconds // 3600
+
+        if days > 0:
+            return f"{days} дней {hours} часов" if hours > 0 else f"{days} дней"
+        else:
+            return f"{hours} часов"
+
+    def __format_date(self, date: datetime) -> str:
+        # Убедитесь, что локаль установлена на русский
+        locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
+        # Форматируем дату с русским названием месяца
+        return format_date(date, format="d MMMM yyyy", locale='ru')
 
 def get_tasks_service(tasks_repository: TasksRepository = Depends(get_tasks_repository)):
     return TasksService(tasks_repository)
