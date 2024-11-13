@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-
+from models.enums import TasksStatusEnum
 from fastapi import Depends, HTTPException
 from starlette import status
 from api.dto.tasks_dto import TaskRequestDTO, TaskResponseDTO
@@ -9,6 +9,25 @@ from models.entity import TasksModel
 class TasksService:
     def __init__(self, tasks_repository: TasksRepository):
         self.tasks_repository = tasks_repository
+
+    async def get_task_by_id(self, task_id: int) -> TaskResponseDTO:
+        task = await self.tasks_repository.get_task_by_id(task_id)
+
+        if task is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Task not found",
+            )
+        return TaskResponseDTO(
+            id=task.id,
+            taskName=task.name,
+            taskDescription=task.description,
+            taskPrice=task.price,
+            taskTerm=task.term_to,
+            taskCity=task.location,
+            isPublic=task.is_public,
+            taskStatus=task.status
+        )
 
     async def get_tasks_for_customer(self, current_user: dict):
         auth_id = int(current_user.get('id'))
@@ -26,7 +45,8 @@ class TasksService:
                     taskPrice=task.price,
                     taskTerm=task.term_to,
                     taskCity=task.location,
-                    isPublic=task.is_public
+                    isPublic=task.is_public,
+                    taskStatus=task.status
                 )
             )
 
@@ -43,7 +63,8 @@ class TasksService:
             term_to=data.taskTerm.replace(tzinfo=None),
             term_from=datetime.utcnow(),
             location=data.taskCity,
-            user_id=user.id
+            user_id=user.id,
+            status=TasksStatusEnum.CREATED
         )
 
         await self.tasks_repository.create_task(new_task)

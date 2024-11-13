@@ -18,4 +18,5 @@ class TaskResponseDTO(BaseModel):
     taskPrice: float = Field(..., description="Цена задание")
     taskTerm: datetime = Field(..., description="Срок выполнение задание")
     taskCity: str = Field(..., description="Город выполнение задание")
+    taskStatus: str = Field(..., description="Статус задания")
     isPublic: bool = Field(..., description="Флаг то что опубликовано ли задание")

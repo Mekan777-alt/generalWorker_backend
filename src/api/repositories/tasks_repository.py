@@ -10,6 +10,10 @@ class TasksRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    async def get_task_by_id(self, task_id: int):
+        result = await self.session.execute(select(TasksModel).where(TasksModel.id == task_id))
+        return result.scalar_one_or_none()
+
     async def get_tasks_for_customer(self, user_id: int):
         result = await self.session.execute(select(TasksModel).where(TasksModel.user_id == user_id))
         return result.scalars()

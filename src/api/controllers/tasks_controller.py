@@ -1,5 +1,4 @@
 from fastapi import Depends, APIRouter
-from sqlalchemy.testing.pickleable import User
 from starlette import status
 from typing import Annotated, List
 from api.dependency.current_user import get_user_from_token
@@ -7,16 +6,28 @@ from api.dto.tasks_dto import TaskRequestDTO, TaskResponseDTO
 from api.services.tasks_service import get_tasks_service, TasksService
 
 router = APIRouter(
-    tags=['Задачи']
+    tags=['Задачи для заказчика']
 )
 
 @router.get('/tasks',
             summary="Возвращает массив задач по текущему заказчику",
             status_code=status.HTTP_200_OK,
-            response_model=List[TaskResponseDTO])
-async def get_tasks(current_user: Annotated[dict, Depends(get_user_from_token)],
+            response_model=List[TaskResponseDTO]
+            )
+async def get_tasks_endpoint(current_user: Annotated[dict, Depends(get_user_from_token)],
                     service: TasksService = Depends(get_tasks_service)):
     return await service.get_tasks_for_customer(current_user)
+
+
+@router.get('/tasks/{task_id}',
+            summary="Возвращает задачу по ID",
+            status_code=status.HTTP_200_OK,
+            response_model=TaskResponseDTO
+            )
+async def get_task_by_id_endpoint(task_id: int,
+                                  current_user: Annotated[dict, Depends(get_user_from_token)],
+                                  service: TasksService = Depends(get_tasks_service)):
+    return await service.get_task_by_id(task_id)
 
 @router.post('/tasks',
              summary="Создать задачу",
