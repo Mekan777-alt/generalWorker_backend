@@ -9,7 +9,7 @@ router = APIRouter(
     tags=['Задачи для заказчика']
 )
 
-@router.get('/tasks',
+@router.get('/customer_tasks',
             summary="Возвращает массив задач по текущему заказчику",
             status_code=status.HTTP_200_OK,
             response_model=List[TaskResponseDTO]
@@ -19,7 +19,7 @@ async def get_tasks_endpoint(current_user: Annotated[dict, Depends(get_user_from
     return await service.get_tasks_for_customer(current_user)
 
 
-@router.get('/tasks/{task_id}',
+@router.get('/customer_tasks/{task_id}',
             summary="Возвращает задачу по ID",
             status_code=status.HTTP_200_OK,
             response_model=TaskResponseDTO
@@ -29,7 +29,7 @@ async def get_task_by_id_endpoint(task_id: int,
                                   service: TasksService = Depends(get_tasks_service)):
     return await service.get_task_by_id(task_id)
 
-@router.post('/tasks',
+@router.post('/customer_tasks',
              summary="Создать задачу",
              status_code=status.HTTP_201_CREATED,
              response_model=TaskResponseDTO
@@ -39,7 +39,7 @@ async def create_task_endpoint(current_user: Annotated[dict, Depends(get_user_fr
                                service: TasksService = Depends(get_tasks_service)):
     return await service.create_task(current_user, data)
 
-@router.post('/tasks/{task_id}/description',
+@router.post('/customer_tasks/{task_id}/description',
              summary="Добавление описании задачи",
              status_code=status.HTTP_201_CREATED,
              response_model=TaskResponseDTO
@@ -51,7 +51,7 @@ async def create_task_description_endpoint(task_id: int,
     return await service.update_task_to_description(task_id, data)
 
 
-@router.patch('/tasks/{task_id}',
+@router.patch('/customer_tasks/{task_id}',
               summary="Обновление задачи",
               status_code=status.HTTP_200_OK,
               response_model=TaskResponseDTO
@@ -64,7 +64,7 @@ async def update_task_endpoint(task_id: int,
     return await service.update_task(task_id, data)
 
 
-@router.post('/tasks/{task_id}/confirm',
+@router.post('/customer_tasks/{task_id}/confirm',
              summary="Подтверждение публикации задания",
              status_code=status.HTTP_201_CREATED,
              response_model=TaskResponseDTO
