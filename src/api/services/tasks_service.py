@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from models.enums import TasksStatusEnum
 from fastapi import Depends, HTTPException
 from starlette import status
-from api.dto.tasks_dto import TaskRequestDTO, TaskResponseDTO
+from api.dto.tasks_dto import TaskRequestDTO, TaskResponseDTO, TaskRequestDescriptionDTO
 from api.repositories.tasks_repository import get_tasks_repository, TasksRepository
 from models.entity import TasksModel
 from babel.dates import format_date
@@ -64,7 +64,6 @@ class TasksService:
 
         new_task = TasksModel(
             name=data.taskName,
-            description=data.taskDescription,
             price=data.taskPrice,
             term_to=data.taskTerm.replace(tzinfo=None),
             term_from=datetime.utcnow(),
@@ -78,12 +77,35 @@ class TasksService:
         return TaskResponseDTO(
             id=new_task.id,
             taskName=new_task.name,
-            taskDescription=new_task.description,
             taskPrice=new_task.price,
             taskTerm=new_task.term_to,
             taskCity=new_task.location,
             isPublic=new_task.is_public
         )
+
+    async def update_task_to_description(self, task_id: int, data: TaskRequestDescriptionDTO):
+        task = await self.tasks_repository.get_task_by_id(task_id)
+
+        if task is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Task not found'
+            )
+
+        task.description = data.taskDescription
+
+        await self.tasks_repository.update_task(task)
+
+        return TaskResponseDTO(
+            id=task.id,
+            taskName=task.name,
+            taskDescription=task.description,
+            taskPrice=task.price,
+            taskTerm=task.term_to,
+            taskCity=task.location,
+            isPublic=task.is_public
+        )
+
 
     async def update_task(self, task_id: int, data: TaskRequestDTO):
         task = await self.tasks_repository.get_task_by_id(task_id)
