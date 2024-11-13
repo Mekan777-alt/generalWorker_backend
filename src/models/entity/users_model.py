@@ -14,5 +14,5 @@ class UsersModel(Base):
     photo = Column(String, nullable=True)
     auth_id = Column(Integer, ForeignKey('auth.id'), nullable=True)
 
-    roles = relationship("RoleModel", secondary="user_roles", back_populates="users")
     auth_info = relationship("AuthModel", back_populates="user")
+    tasks = relationship("TasksModel", back_populates="users")

@@ -7,10 +7,16 @@ from fastapi import FastAPI
 from starlette.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
+from sqlalchemy import select
+
+from models.enums import RolesEnum
+from models.entity import RoleModel
+from database.session import async_session_maker
 
 from api.controllers.auth_controller import router as auth_router
 from api.controllers.user_controller import router as user_router
 from api.controllers.tasks_controller import router as tasks_router
+
 
 
 @asynccontextmanager
@@ -24,6 +30,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         decode_responses=True
     )
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+
+    async with async_session_maker() as session:
+        for role in RolesEnum:
+            result = await session.execute(select(RoleModel).where(RoleModel.name == role.value))
+            db_role = result.scalar()
+            if not db_role:
+
+                role_instance = RoleModel(name=role.value)
+                session.add(role_instance)
+
+        await session.commit()
 
     yield
 

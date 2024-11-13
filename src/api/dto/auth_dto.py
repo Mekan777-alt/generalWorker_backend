@@ -29,7 +29,10 @@ class AuthResponse(BaseModel):
 
 
 class AuthUserDTO(BaseModel):
-    phoneNumber: str = Field(..., examples=["+71234567890"], description="Номер телефона в формате +7 и 10 цифр")
+    role: str = Field(..., examples=["Customer", "Executor"],
+                             description="Выбранная роль при авторизации пользователя")
+    phoneNumber: str = Field(..., examples=["+71234567890"],
+                             description="Номер телефона в формате +7 и 10 цифр")
 
     @field_validator('phoneNumber')
     def validate_phone_number(cls, v):

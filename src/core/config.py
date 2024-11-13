@@ -59,12 +59,24 @@ class FernetConfiguration(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding='utf-8', extra='ignore')
 
 
+class S3Settings(BaseSettings):
+    s3_bucket_name: str = Field(..., validation_alias='S3_BUCKET')
+    s3_url: str = Field(..., validation_alias='S3_URL')
+    s3_region: str = Field(..., validation_alias='S3_REGION')
+    s3_access_key: str = Field(..., validation_alias='S3_ACCESS_KEY')
+    s3_secret_key: str = Field(..., validation_alias='S3_SECRET_KEY')
+
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding='utf-8', extra='ignore')
+
+
+
 class Settings(BaseSettings):
     database_settings: DBSettings = DBSettings()
     redis_settings: RedisSettings = RedisSettings()
     fernet_settings: FernetConfiguration = FernetConfiguration()
     devino_telecom_settings: DevinoTelecomSettings = DevinoTelecomSettings()
     jwt_settings: JWTSettings = JWTSettings()
+    s3_settings: S3Settings = S3Settings()
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding='utf-8', extra='ignore')
 

@@ -17,3 +17,4 @@ class AuthModel(Base):
     isActive = Column(Boolean, default=False)
 
     user = relationship("UsersModel", back_populates="auth_info")
+    user_roles = relationship('UserRolesModel', back_populates='auth_roles')

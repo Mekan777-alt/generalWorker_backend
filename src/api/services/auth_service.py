@@ -6,7 +6,7 @@ import jwt
 
 from api.dependency.encryption import encrypt_phone
 from datetime import datetime, timedelta, timezone
-from models.entity import AuthModel, UsersModel
+from models.entity import AuthModel, UsersModel, UserRolesModel
 from fastapi import Depends, HTTPException
 from starlette import status
 from api.repositories.auth_repository import get_auth_repository, AuthRepository
@@ -22,8 +22,7 @@ class AuthService:
     async def auth_user(self, request: AuthUserDTO):
         encrypted_phone = await encrypt_phone(request.phoneNumber)
         auth = await self.auth_repository.get_user_by_phone_number(encrypted_phone)
-        verification_code = str(random.randint(100000, 999999))
-
+        verification_code = str(random.randint(1000, 9999))
 
         if not auth:
 
@@ -40,6 +39,25 @@ class AuthService:
             )
 
             await self.auth_repository.create_profile(profile)
+
+            roles = await self.auth_repository.get_roles()
+            user_role = []
+
+            for role in roles:
+                is_use = False
+
+                if role.name == request.role:
+                    is_use = True
+
+                new_role = UserRolesModel(
+                    auth_id=auth_model.id,
+                    role_id=role.id,
+                    is_use=is_use,
+                )
+                user_role.append(new_role)
+
+            await self.auth_repository.create_role_to_user(user_role)
+
             return VerifyCode(verificationCode=verification_code)
 
         # send_message = await self.__send_message(request.phoneNumber[1:], verification_code)
@@ -91,9 +109,17 @@ class AuthService:
         if datetime.utcnow() > auth.otpExpiry:
             raise HTTPException(detail="Код подтверждения истек", status_code=status.HTTP_400_BAD_REQUEST)
 
+        auth.otpCode = None
+        auth.otpExpiry = None
+        auth.isActive = True
+
+        await self.auth_repository.update_user(auth)
+
+        user_role = await self.auth_repository.get_auth_roles(auth.id)
+
         access_token, refresh_token = await self.__create_tokens({"id": auth.id,
-                                                                  "phoneNumber": auth.phoneNumber
-                                                                  })
+                                                                  "phoneNumber": auth.phoneNumber,
+                                                                  "role_id": user_role.role_id})
 
         return TokensCreateResponseDTO(access_token=access_token, refresh_token=refresh_token)
 
@@ -152,9 +178,9 @@ class AuthService:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Пользователь не найден или данные токена не совпадают."
             )
-
+        user_role = await self.auth_repository.get_auth_roles(user_from_token.id)
         # Генерируем новые токены (например, создаем новые access и refresh токены)
-        user_data = {"id": user_from_token.id, "phoneNumber": user_from_token.phoneNumber}
+        user_data = {"id": user_from_token.id, "phoneNumber": user_from_token.phoneNumber, "role_id": user_role.role_id}
         new_access_token, new_refresh_token = await self.__create_tokens(user_data)
 
         # Возвращаем новые токены

@@ -10,4 +10,6 @@ class RoleModel(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
 
-    users = relationship("UsersModel", secondary="user_roles", back_populates="roles")
+    rating = relationship("UserRoleRatingModel", back_populates="roles")
+    done_create_task = relationship('UserRolesTasksModel', back_populates='roles_tasks')
+    user_roles = relationship('UserRolesModel', back_populates='role_roles')
