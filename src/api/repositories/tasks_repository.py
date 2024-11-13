@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from sqlalchemy import select
+from models.enums import TasksStatusEnum
 from database.session import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
@@ -16,6 +17,24 @@ class TasksRepository:
 
     async def get_tasks_for_customer(self, user_id: int):
         result = await self.session.execute(select(TasksModel).where(TasksModel.user_id == user_id))
+        return result.scalars()
+
+    async def get_history_tasks(self, user_id: int):
+        result = await self.session.execute(
+            select(TasksModel).where(
+                TasksModel.user_id == user_id,
+                TasksModel.status.notin_([TasksStatusEnum.CREATED, TasksStatusEnum.PROCESSING])
+            )
+        )
+        return result.scalars()
+
+    async def get_open_tasks(self, user_id: int):
+        result = await self.session.execute(
+            select(TasksModel).where(
+                TasksModel.user_id == user_id,
+                TasksModel.status.notin_([TasksStatusEnum.CANCELLED, TasksStatusEnum.COMPLETED])
+            )
+        )
         return result.scalars()
 
     async def get_user(self, auth_id: int):

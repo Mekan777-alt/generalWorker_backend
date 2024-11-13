@@ -1,6 +1,9 @@
 import locale
 
 from datetime import datetime, timezone
+
+from alembic.command import history
+
 from models.enums import TasksStatusEnum
 from fastapi import Depends, HTTPException
 from starlette import status
@@ -35,12 +38,19 @@ class TasksService:
         )
 
 
-    async def get_tasks_for_customer(self, current_user: dict):
+    async def get_tasks_for_customer(self, current_user: dict, filters: str):
         auth_id = int(current_user.get('id'))
         user = await self.tasks_repository.get_user(auth_id=auth_id)
+        tasks = None
 
-        tasks = await self.tasks_repository.get_tasks_for_customer(user.id)
         tasks_array = []
+
+        if filters == 'open':
+            tasks = await self.tasks_repository.get_open_tasks(user.id)
+
+        if filters == 'history':
+            tasks = await self.tasks_repository.get_history_tasks(user.id)
+
 
         for task in tasks:
             tasks_array.append(
@@ -49,7 +59,8 @@ class TasksService:
                     taskName=task.name,
                     taskDescription=task.description,
                     taskPrice=task.price,
-                    taskTerm=task.term_to,
+                    taskTerm=self.__format_duration(task.term_from, task.term_to),
+                    taskCreated=self.__format_date(task.term_from),
                     taskCity=task.location,
                     isPublic=task.is_public,
                     taskStatus=task.status

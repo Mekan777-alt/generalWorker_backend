@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter
+from fastapi import Depends, APIRouter, Query
 from starlette import status
 from typing import Annotated, List
 from api.dependency.current_user import get_user_from_token
@@ -15,8 +15,10 @@ router = APIRouter(
             response_model=List[TaskResponseDTO]
             )
 async def get_tasks_endpoint(current_user: Annotated[dict, Depends(get_user_from_token)],
-                    service: TasksService = Depends(get_tasks_service)):
-    return await service.get_tasks_for_customer(current_user)
+                             filters: str = Query("open",
+                                                  description="Фильтры для задач, например 'open,history'"),
+                             service: TasksService = Depends(get_tasks_service)):
+    return await service.get_tasks_for_customer(current_user, filters)
 
 
 @router.get('/customer_tasks/{task_id}',

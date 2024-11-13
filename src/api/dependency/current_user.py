@@ -14,7 +14,10 @@ async def get_user_from_token(
 ):
     try:
         if not token:
-            raise ValueError("No token")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+            )
         # Декодируем и проверяем токен с использованием секретного ключа и алгоритма
         payload = jwt.decode(token.credentials, settings.jwt_settings.secret_key,
                              algorithms=[settings.jwt_settings.algorithm])
