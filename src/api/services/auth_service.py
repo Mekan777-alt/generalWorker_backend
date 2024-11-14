@@ -10,7 +10,7 @@ from models.entity import AuthModel, UsersModel, UserRolesModel
 from fastapi import Depends, HTTPException
 from starlette import status
 from api.repositories.auth_repository import get_auth_repository, AuthRepository
-from api.dto.auth_dto import VerifyCode, AuthUserDTO, TokensCreateResponseDTO, AuthRefreshTokenDTO
+from api.dto.auth_dto import VerifyCode, AuthUserDTO, TokensCreateResponseDTO, AuthRefreshTokenDTO, UpdateRoleRequestDTO
 from core.config import settings
 
 
@@ -186,6 +186,31 @@ class AuthService:
         # Возвращаем новые токены
         return TokensCreateResponseDTO(access_token=new_access_token, refresh_token=new_refresh_token)
 
+
+    async def update_role_service(self, current_user: dict, data: UpdateRoleRequestDTO):
+        auth_id = int(current_user.get('id'))
+        phone_number = current_user.get('phoneNumber')
+
+        use_role = await self.auth_repository.get_auth_roles(auth_id)
+
+        if use_role:
+            use_role.is_use = False
+            await self.auth_repository.update_roles(use_role)
+
+        new_role = await self.auth_repository.get_role_by_name(data.role)
+
+        if new_role:
+
+            new_role_relation = await self.auth_repository.get_auth_and_role_id_model(auth_id, new_role.id)
+
+            new_role_relation.is_use = True
+            await self.auth_repository.update_roles(new_role)
+
+        user_data = {"id": auth_id, "phoneNumber": phone_number, "role_id": new_role.id}
+        new_access_token, new_refresh_token = await self.__create_tokens(user_data)
+
+        # Возвращаем новые токены
+        return TokensCreateResponseDTO(access_token=new_access_token, refresh_token=new_refresh_token)
 
 def get_auth_service(auth_repository: AuthRepository = Depends(get_auth_repository)):
     return AuthService(auth_repository=auth_repository)

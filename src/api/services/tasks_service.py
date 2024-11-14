@@ -2,8 +2,6 @@ import locale
 
 from datetime import datetime, timezone
 
-from alembic.command import history
-
 from models.enums import TasksStatusEnum
 from fastapi import Depends, HTTPException
 from starlette import status
