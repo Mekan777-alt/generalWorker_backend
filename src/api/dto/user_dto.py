@@ -8,7 +8,6 @@ class UserResponseDTO(BaseModel):
     location: Optional[str] = Field(None, description="Местоположение пользователя")
     aboutMySelf: Optional[str] = Field(None, description="Краткая информация о пользователе")
     photo: Optional[str] = Field(None, description="URL или путь к фотографии пользователя")
-    roles: Optional[List[str]] = Field(None, description="Список ролей, связанных с пользователем")
 
     class Config:
         from_attributes = True

@@ -1,13 +1,12 @@
 import locale
-
-from datetime import datetime, timezone
-
+from datetime import datetime
 from models.enums import TasksStatusEnum
 from fastapi import Depends, HTTPException
 from starlette import status
 from api.dto.tasks_dto import TaskRequestDTO, TaskResponseDTO, TaskRequestDescriptionDTO
 from api.repositories.tasks_repository import get_tasks_repository, TasksRepository
-from models.entity import TasksModel
+from models.entity import TasksModel, TaskResponseModel
+from models.enums import RolesEnum
 from babel.dates import format_date
 
 class TasksService:
@@ -36,19 +35,41 @@ class TasksService:
         )
 
 
-    async def get_tasks_for_customer(self, current_user: dict, filters: str):
+    async def get_tasks_for_all_user(self, current_user: dict, filters: str):
         auth_id = int(current_user.get('id'))
-        user = await self.tasks_repository.get_user(auth_id=auth_id)
-        tasks = None
+        role_id = int(current_user.get('role_id'))
 
+        user_role = await self.tasks_repository.get_role(role_id=role_id)
+
+        tasks = None
         tasks_array = []
 
-        if filters == 'open':
-            tasks = await self.tasks_repository.get_open_tasks(user.id)
+        if filters == 'tasks':
+
+            if user_role.name == RolesEnum.CUSTOMER.value:
+
+                user_info = await self.tasks_repository.get_customer_profile(auth_id=auth_id)
+                tasks = await self.tasks_repository.get_open_tasks(user_info.id)
+
+            elif user_role.name == RolesEnum.EXECUTOR.value:
+
+                tasks = await self.tasks_repository.get_open_executor_tasks()
 
         if filters == 'history':
-            tasks = await self.tasks_repository.get_history_tasks(user.id)
 
+            if user_role.name == RolesEnum.CUSTOMER.value:
+
+                user_info = await self.tasks_repository.get_customer_profile(auth_id=auth_id)
+                tasks = await self.tasks_repository.get_history_tasks(user_info.id)
+
+            elif user_role.name == RolesEnum.EXECUTOR.value:
+
+                user_info = await self.tasks_repository.get_executor_profile(auth_id=auth_id)
+                tasks = await self.tasks_repository.get_history_executor_tasks(user_info.id)
+
+        if not tasks:
+
+            return []
 
         for task in tasks:
             tasks_array.append(
@@ -69,7 +90,7 @@ class TasksService:
 
     async def create_task(self, current_user: dict, data: TaskRequestDTO):
         auth_id = int(current_user.get('id'))
-        user = await self.tasks_repository.get_user(auth_id=auth_id)
+        user = await self.tasks_repository.get_customer_profile(auth_id=auth_id)
 
         new_task = TasksModel(
             name=data.taskName,
@@ -77,19 +98,21 @@ class TasksService:
             term_to=data.taskTerm.replace(tzinfo=None),
             term_from=datetime.utcnow(),
             location=data.taskCity,
-            user_id=user.id,
+            customer_id=user.id,
             status=TasksStatusEnum.CREATED
         )
 
-        await self.tasks_repository.create_task(new_task)
+        task = await self.tasks_repository.create_task(new_task)
 
         return TaskResponseDTO(
-            id=new_task.id,
-            taskName=new_task.name,
-            taskPrice=new_task.price,
-            taskTerm=new_task.term_to,
-            taskCity=new_task.location,
-            isPublic=new_task.is_public
+            id=task.id,
+            taskName=task.name,
+            taskPrice=task.price,
+            taskTerm=self.__format_date(task.term_to),
+            taskCity=task.location,
+            isPublic=task.is_public,
+            taskStatus=task.status,
+            taskCreated=self.__format_date(task.term_from),
         )
 
     async def update_task_to_description(self, task_id: int, data: TaskRequestDescriptionDTO):
@@ -103,23 +126,25 @@ class TasksService:
 
         task.description = data.taskDescription
 
-        await self.tasks_repository.update_task(task)
+        task_update = await self.tasks_repository.update_task(task)
 
         return TaskResponseDTO(
-            id=task.id,
-            taskName=task.name,
-            taskDescription=task.description,
-            taskPrice=task.price,
-            taskTerm=task.term_to,
-            taskCity=task.location,
-            isPublic=task.is_public
+            id=task_update.id,
+            taskName=task_update.name,
+            taskDescription=task_update.description,
+            taskPrice=task_update.price,
+            taskTerm=self.__format_date(task_update.term_to),
+            taskCity=task_update.location,
+            isPublic=task_update.is_public,
+            taskStatus=task_update.status,
+            taskCreated=self.__format_date(task_update.term_from),
         )
 
 
     async def update_task(self, task_id: int, data: TaskRequestDTO):
         task = await self.tasks_repository.get_task_by_id(task_id)
 
-        if task is None:
+        if not task:
 
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -160,17 +185,47 @@ class TasksService:
 
         task.is_public = True
 
-        await self.tasks_repository.update_task(task)
+        task_update = await self.tasks_repository.update_task(task)
 
         return TaskResponseDTO(
-            id=task.id,
-            taskName=task.name,
-            taskDescription=task.description,
-            taskPrice=task.price,
-            taskTerm=task.term_to,
-            taskCity=task.location,
-            isPublic=task.is_public
+            id=task_update.id,
+            taskName=task_update.name,
+            taskDescription=task_update.description,
+            taskPrice=task_update.price,
+            taskTerm=self.__format_date(task_update.term_to),
+            taskCity=task_update.location,
+            isPublic=task_update.is_public,
+            taskStatus=task_update.status,
+            taskCreated=self.__format_date(task_update.term_from),
         )
+
+    async def response_task_by_id(self, task_id: int, current_user: dict):
+        auth_id = int(current_user.get('id'))
+        task = await self.tasks_repository.get_task_by_id(task_id)
+
+        if not task:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Task not found'
+            )
+
+        executor = await self.tasks_repository.get_executor_profile(auth_id=auth_id)
+
+        if not executor:
+
+            raise HTTPException(
+                detail="Для начало заполните анкету",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        new_response = TaskResponseModel(
+            task_id=task_id,
+            executor_id=executor.id
+        )
+
+        await self.tasks_repository.add_response_task(new_response)
+
+        return {"message": "Отклик на задачу успешно добавлен"}
 
     def __format_duration(self, term_from, term_to):
         # Рассчитываем разницу между датами

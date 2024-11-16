@@ -23,5 +23,5 @@ class TaskResponseDTO(BaseModel):
     taskTerm: str = Field(..., description="Срок выполнение задание")
     taskCreated: Optional[str] = Field(None, description="Дата создание")
     taskCity: str = Field(..., description="Город выполнение задание")
-    taskStatus: str = Field(..., description="Статус задания")
+    taskStatus: Optional[str] = Field(..., description="Статус задания")
     isPublic: bool = Field(..., description="Флаг то что опубликовано ли задание")

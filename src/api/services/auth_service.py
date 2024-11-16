@@ -6,7 +6,7 @@ import jwt
 
 from api.dependency.encryption import encrypt_phone
 from datetime import datetime, timedelta, timezone
-from models.entity import AuthModel, UsersModel, UserRolesModel
+from models.entity import AuthModel, UserRolesModel
 from fastapi import Depends, HTTPException
 from starlette import status
 from api.repositories.auth_repository import get_auth_repository, AuthRepository
@@ -33,12 +33,6 @@ class AuthService:
             )
 
             auth_model = await self.auth_repository.create_user(user)
-
-            profile = UsersModel(
-                auth_id=auth_model.id
-            )
-
-            await self.auth_repository.create_profile(profile)
 
             roles = await self.auth_repository.get_roles()
             user_role = []
@@ -199,12 +193,23 @@ class AuthService:
 
         new_role = await self.auth_repository.get_role_by_name(data.role)
 
-        if new_role:
+        if not new_role:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Role '{data.role}' does not exist."
+            )
 
-            new_role_relation = await self.auth_repository.get_auth_and_role_id_model(auth_id, new_role.id)
 
-            new_role_relation.is_use = True
-            await self.auth_repository.update_roles(new_role)
+        new_role_relation = await self.auth_repository.get_auth_and_role_id_model(auth_id, new_role.id)
+
+        if not new_role_relation:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"User does not have access to the role '{data.role}'."
+            )
+
+        new_role_relation.is_use = True
+        await self.auth_repository.update_roles(new_role)
 
         user_data = {"id": auth_id, "phoneNumber": phone_number, "role_id": new_role.id}
         new_access_token, new_refresh_token = await self.__create_tokens(user_data)

@@ -17,6 +17,8 @@ class TasksModel(Base):
     location = Column(String, nullable=False)
     is_public = Column(Boolean, default=False)
     status = Column(Enum(TasksStatusEnum), default=TasksStatusEnum.CREATED)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    customer_id = Column(Integer, ForeignKey('customer_profile.id'), nullable=False)
 
-    users = relationship("UsersModel", back_populates="tasks")
+    customer = relationship("CustomerProfileModel", back_populates="tasks")
+    responses = relationship("TaskResponseModel", back_populates="tasks", cascade="all, delete-orphan")
+

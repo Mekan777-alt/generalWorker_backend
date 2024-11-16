@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Form, UploadFile, File
 from typing import Annotated, Optional
-from api.dto.user_dto import UserResponseDTO, UserPartialUpdateDTO
+from api.dto.user_dto import UserResponseDTO
 from api.dependency.current_user import get_user_from_token
 from starlette import status
 from api.services.user_service import get_user_service, UserService

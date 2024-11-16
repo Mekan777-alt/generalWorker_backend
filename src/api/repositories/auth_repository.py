@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from fastapi import Depends
 from typing import List
-from models.entity import AuthModel, UsersModel, RoleModel, UserRolesModel
+from models.entity import AuthModel,  RoleModel, UserRolesModel
 
 
 class AuthRepository:
@@ -90,10 +90,6 @@ class AuthRepository:
         await self.session.commit()
         await self.session.refresh(model)
         return model
-
-    async def create_profile(self, model: UsersModel):
-        self.session.add(model)
-        await self.session.commit()
 
 
 def get_auth_repository(session: AsyncSession = Depends(get_session)) -> AuthRepository:

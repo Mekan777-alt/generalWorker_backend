@@ -2,7 +2,6 @@ from sqlalchemy import Column, Integer, Enum, Numeric
 
 from models.enums.subscription_period_enum import SubscriptionPeriodEnum
 from src.database.base import Base
-from enum import Enum as PyEnum
 
 
 class SubscriptionModel(Base):

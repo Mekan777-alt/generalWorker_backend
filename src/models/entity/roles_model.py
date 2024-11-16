@@ -11,5 +11,4 @@ class RoleModel(Base):
     name = Column(String, unique=True, nullable=False)
 
     rating = relationship("UserRoleRatingModel", back_populates="roles")
-    done_create_task = relationship('UserRolesTasksModel', back_populates='roles_tasks')
     user_roles = relationship('UserRolesModel', back_populates='role_roles')

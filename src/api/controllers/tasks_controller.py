@@ -9,19 +9,19 @@ router = APIRouter(
     tags=['Задачи для заказчика']
 )
 
-@router.get('/customer_tasks',
-            summary="Возвращает массив задач по текущему заказчику",
+@router.get('/tasks',
+            summary="Возвращает массив задач для всех вид роль",
             status_code=status.HTTP_200_OK,
             response_model=List[TaskResponseDTO]
             )
 async def get_tasks_endpoint(current_user: Annotated[dict, Depends(get_user_from_token)],
-                             filters: str = Query("open",
-                                                  description="Фильтры для задач, например 'open,history'"),
+                             filters: str = Query("tasks",
+                                                  description="Фильтры для задач, например 'tasks,history'"),
                              service: TasksService = Depends(get_tasks_service)):
-    return await service.get_tasks_for_customer(current_user, filters)
+    return await service.get_tasks_for_all_user(current_user, filters)
 
 
-@router.get('/customer_tasks/{task_id}',
+@router.get('/tasks/{task_id}',
             summary="Возвращает задачу по ID",
             status_code=status.HTTP_200_OK,
             response_model=TaskResponseDTO
@@ -31,7 +31,7 @@ async def get_task_by_id_endpoint(task_id: int,
                                   service: TasksService = Depends(get_tasks_service)):
     return await service.get_task_by_id(task_id)
 
-@router.post('/customer_tasks',
+@router.post('/tasks',
              summary="Создать задачу",
              status_code=status.HTTP_201_CREATED,
              response_model=TaskResponseDTO
@@ -41,7 +41,7 @@ async def create_task_endpoint(current_user: Annotated[dict, Depends(get_user_fr
                                service: TasksService = Depends(get_tasks_service)):
     return await service.create_task(current_user, data)
 
-@router.post('/customer_tasks/{task_id}/description',
+@router.post('/tasks/{task_id}/description',
              summary="Добавление описании задачи",
              status_code=status.HTTP_201_CREATED,
              response_model=TaskResponseDTO
@@ -53,7 +53,7 @@ async def create_task_description_endpoint(task_id: int,
     return await service.update_task_to_description(task_id, data)
 
 
-@router.patch('/customer_tasks/{task_id}',
+@router.patch('/tasks/{task_id}',
               summary="Обновление задачи",
               status_code=status.HTTP_200_OK,
               response_model=TaskResponseDTO
@@ -66,7 +66,7 @@ async def update_task_endpoint(task_id: int,
     return await service.update_task(task_id, data)
 
 
-@router.post('/customer_tasks/{task_id}/confirm',
+@router.post('/tasks/{task_id}/confirm',
              summary="Подтверждение публикации задания",
              status_code=status.HTTP_201_CREATED,
              response_model=TaskResponseDTO
@@ -76,3 +76,12 @@ async def confirm_task_endpoint(task_id: int,
                                 service: TasksService = Depends(get_tasks_service)
                                 ):
     return await service.confirm_task(task_id)
+
+@router.post('/tasks/{task_id}/response',
+             summary="Отклик на вакансию",
+             status_code=status.HTTP_201_CREATED,
+             )
+async def response_task_endpoint(task_id: int,
+                                 current_user: Annotated[dict, Depends(get_user_from_token)],
+                                 service: TasksService = Depends(get_tasks_service)):
+    return await service.response_task_by_id(task_id, current_user)
