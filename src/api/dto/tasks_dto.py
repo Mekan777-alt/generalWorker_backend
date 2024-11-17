@@ -1,5 +1,4 @@
 from datetime import datetime
-from tkinter import Frame
 from typing import Optional
 
 from pydantic import BaseModel, Field
