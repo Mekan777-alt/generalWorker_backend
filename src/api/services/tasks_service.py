@@ -94,6 +94,7 @@ class TasksService:
 
         new_task = TasksModel(
             name=data.taskName,
+            description=data.taskDescription,
             price=data.taskPrice,
             term_to=data.taskTerm.replace(tzinfo=None),
             term_from=datetime.utcnow(),
@@ -107,6 +108,7 @@ class TasksService:
         return TaskResponseDTO(
             id=task.id,
             taskName=task.name,
+            taskDescription=task.description,
             taskPrice=task.price,
             taskTerm=self.__format_date(task.term_to),
             taskCity=task.location,
