@@ -1,4 +1,5 @@
 from datetime import datetime
+from tkinter import Frame
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -26,3 +27,15 @@ class TaskResponseDTO(BaseModel):
     taskCity: str = Field(..., description="Город выполнение задание")
     taskStatus: Optional[str] = Field(..., description="Статус задания")
     isPublic: bool = Field(..., description="Флаг то что опубликовано ли задание")
+
+
+class ResponseByTaskIdDTO(BaseModel):
+    id: int = Field(..., description="Идентификатор исполнителя")
+    rating: int = Field(..., description="Рейтинг исполнителя")
+    photo: Optional[str] = Field(..., description="Фото исполнителя")
+    created_at: str = Field(..., description="Время отклика")
+    text: str = Field(..., description="Текст отклика")
+
+
+class CreateResponseTaskByIdDTO(BaseModel):
+    text: str = Field(..., description="Текст для отклика")

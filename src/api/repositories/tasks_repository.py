@@ -1,9 +1,12 @@
-from sqlalchemy import select
+from sqlalchemy import select, func, case
+from sqlalchemy.orm import joinedload
+
 from models.enums import TasksStatusEnum
 from database.session import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
-from models.entity import TasksModel, RoleModel, CustomerProfileModel, ExecutorProfileModel, TaskResponseModel
+from models.entity import TasksModel, RoleModel, CustomerProfileModel, ExecutorProfileModel, TaskResponseModel, \
+    ReviewModel
 
 
 class TasksRepository:
@@ -29,9 +32,31 @@ class TasksRepository:
         result = await self.session.execute(select(TasksModel).where(TasksModel.id == task_id))
         return result.scalar_one_or_none()
 
-    async def get_tasks_for_customer(self, user_id: int):
-        result = await self.session.execute(select(TasksModel).where(TasksModel.user_id == user_id))
-        return result.scalars()
+    async def get_response_by_task_id(self, task_id: int):
+        result = await self.session.execute(
+            select(TaskResponseModel)
+            .options(joinedload(TaskResponseModel.executor))
+            .where(TaskResponseModel.task_id == task_id)
+        )
+        return result.scalars().all()
+
+    async def get_executor_review_counts(self, executor_id: int):
+        """
+        Подсчет количества положительных и отрицательных отзывов исполнителя.
+        """
+        result = await self.session.execute(
+            select(
+                func.sum(
+                    case((ReviewModel.rating == True, 1), else_=0)
+                ).label('positive_reviews'),
+                func.sum(
+                    case((ReviewModel.rating == False, 1), else_=0)
+                ).label('negative_reviews')
+            ).where(ReviewModel.executor_id == executor_id)
+        )
+        positive_reviews, negative_reviews = result.one_or_none()
+
+        return positive_reviews or 0, negative_reviews or 0
 
     async def get_history_tasks(self, user_id: int):
         result = await self.session.execute(

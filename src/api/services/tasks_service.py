@@ -3,7 +3,8 @@ from datetime import datetime
 from models.enums import TasksStatusEnum
 from fastapi import Depends, HTTPException
 from starlette import status
-from api.dto.tasks_dto import TaskRequestDTO, TaskResponseDTO, TaskRequestDescriptionDTO
+from api.dto.tasks_dto import (TaskRequestDTO, TaskResponseDTO, TaskRequestDescriptionDTO, CreateResponseTaskByIdDTO,
+                               ResponseByTaskIdDTO)
 from api.repositories.tasks_repository import get_tasks_repository, TasksRepository
 from models.entity import TasksModel, TaskResponseModel
 from models.enums import RolesEnum
@@ -123,31 +124,6 @@ class TasksService:
             taskCreated=self.__format_date(task.term_from),
         )
 
-    async def update_task_to_description(self, task_id: int, data: TaskRequestDescriptionDTO):
-        task = await self.tasks_repository.get_task_by_id(task_id)
-
-        if task is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail='Task not found'
-            )
-
-        task.description = data.taskDescription
-
-        task_update = await self.tasks_repository.update_task(task)
-
-        return TaskResponseDTO(
-            id=task_update.id,
-            taskName=task_update.name,
-            taskDescription=task_update.description,
-            taskPrice=task_update.price,
-            taskTerm=self.__format_date(task_update.term_to),
-            taskCity=task_update.location,
-            isPublic=task_update.is_public,
-            taskStatus=task_update.status,
-            taskCreated=self.__format_date(task_update.term_from),
-        )
-
 
     async def update_task(self, task_id: int, data: TaskRequestDTO):
         task = await self.tasks_repository.get_task_by_id(task_id)
@@ -207,7 +183,7 @@ class TasksService:
             taskCreated=self.__format_date(task_update.term_from),
         )
 
-    async def response_task_by_id(self, task_id: int, current_user: dict):
+    async def response_task_by_id(self, task_id: int, current_user: dict, data: CreateResponseTaskByIdDTO):
         auth_id = int(current_user.get('id'))
         task = await self.tasks_repository.get_task_by_id(task_id)
 
@@ -223,17 +199,47 @@ class TasksService:
 
             raise HTTPException(
                 detail="Для начало заполните анкету",
-                status_code=status.HTTP_404_NOT_FOUND
+                status_code=status.HTTP_400_BAD_REQUEST
             )
 
         new_response = TaskResponseModel(
             task_id=task_id,
-            executor_id=executor.id
+            executor_id=executor.id,
+            text=data.text
         )
 
         await self.tasks_repository.add_response_task(new_response)
 
         return {"message": "Отклик на задачу успешно добавлен"}
+
+    async def get_response_by_task_id(self, task_id: int, current_user: dict):
+        task = await self.tasks_repository.get_task_by_id(task_id)
+
+        if not task:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Task not found'
+            )
+
+        task_response = await self.tasks_repository.get_response_by_task_id(task_id=task_id)
+
+        response_array = []
+
+        for response in task_response:
+
+            positive, negative = await self.tasks_repository.get_executor_review_counts(response.executor.id)
+
+            response_array.append(
+                ResponseByTaskIdDTO(
+                    id=response.executor.id,
+                    photo=response.executor.photo,
+                    created_at=self.__format_date(response.response_date),
+                    text=response.text,
+                    rating=positive,
+                )
+            )
+
+        return response_array
 
     def __format_duration(self, term_from, term_to):
         # Рассчитываем разницу между датами

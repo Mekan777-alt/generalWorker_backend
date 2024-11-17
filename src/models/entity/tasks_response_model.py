@@ -11,6 +11,7 @@ class TaskResponseModel(Base):
     task_id = Column(Integer, ForeignKey('tasks.id', ondelete='CASCADE'), nullable=False)
     executor_id = Column(Integer, ForeignKey('executor_profile.id', ondelete='CASCADE'), nullable=False)
     status = Column(Enum(TaskResponseStatusEnum), default=TaskResponseStatusEnum.PENDING, nullable=False)
+    text = Column(String, nullable=True)
     response_date = Column(DateTime, default=datetime.utcnow)
 
     tasks = relationship("TasksModel", back_populates="responses")

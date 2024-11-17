@@ -10,5 +10,4 @@ class RoleModel(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
 
-    rating = relationship("UserRoleRatingModel", back_populates="roles")
     user_roles = relationship('UserRolesModel', back_populates='role_roles')

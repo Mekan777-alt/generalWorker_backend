@@ -16,3 +16,5 @@ class CustomerProfileModel(Base):
 
     auth_info = relationship("AuthModel", back_populates="customer")
     tasks = relationship("TasksModel", back_populates="customer")
+    reviews_left = relationship("ReviewModel", back_populates="customer")  # Отзывы, оставленные заказчиком
+

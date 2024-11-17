@@ -21,4 +21,5 @@ class TasksModel(Base):
 
     customer = relationship("CustomerProfileModel", back_populates="tasks")
     responses = relationship("TaskResponseModel", back_populates="tasks", cascade="all, delete-orphan")
+    reviews = relationship("ReviewModel", back_populates="task")  # Отзывы, связанные с задачей
 

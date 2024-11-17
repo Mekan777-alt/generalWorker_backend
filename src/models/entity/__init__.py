@@ -3,7 +3,7 @@ from .roles_model import RoleModel
 from .tasks_model import TasksModel
 from .subscription_model import SubscriptionModel
 from .user_roles_model import UserRolesModel
-from .user_roles_rating_model import UserRoleRatingModel
 from .customer_profile_model import CustomerProfileModel
 from .executor_profile_model import ExecutorProfileModel
 from .tasks_response_model import TaskResponseModel
+from .reviews_model import ReviewModel

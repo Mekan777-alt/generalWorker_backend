@@ -16,3 +16,4 @@ class ExecutorProfileModel(Base):
 
     auth_info = relationship("AuthModel", back_populates="executor")
     responses = relationship("TaskResponseModel", back_populates="executor", cascade="all, delete-orphan")
+    reviews_received = relationship("ReviewModel", back_populates="executor")  # Отзывы, полученные исполнителем
