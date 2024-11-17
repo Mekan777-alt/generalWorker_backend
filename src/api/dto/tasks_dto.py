@@ -10,6 +10,7 @@ class TaskRequestDescriptionDTO(BaseModel):
 
 class TaskRequestDTO(BaseModel):
     taskName: str = Field(..., description="Название задания")
+    taskDescription: Optional[str] = Field(None, description="Описание задачи")
     taskPrice: float = Field(..., description="Цена задания")
     taskTerm: datetime = Field(..., description="Срок выполнение задания")
     taskCity: str = Field(..., description="Город выполнение задания")
