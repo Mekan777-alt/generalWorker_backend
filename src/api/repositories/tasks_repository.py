@@ -1,7 +1,7 @@
-from sqlalchemy import select, func, case
+from sqlalchemy import select, func, case, update
 from sqlalchemy.orm import joinedload
 
-from models.enums import TasksStatusEnum
+from models.enums import TasksStatusEnum, TaskResponseStatusEnum
 from database.session import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
@@ -39,6 +39,45 @@ class TasksRepository:
             .where(TaskResponseModel.task_id == task_id)
         )
         return result.scalars().all()
+
+    async def get_response_by_id(self, response_id: int, task_id: int):
+        result = await self.session.execute(
+            select(TaskResponseModel).where(TaskResponseModel.id == response_id,
+                                            TaskResponseModel.task_id == task_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def update_response_status(self, response_id: int, task_id: int):
+        # Обновить выбранный response на ACCEPTED
+        accept_query = (
+            update(TaskResponseModel)
+            .where(TaskResponseModel.id == response_id, TaskResponseModel.task_id == task_id)
+            .values(status=TaskResponseStatusEnum.ACCEPTED)
+        )
+        await self.session.execute(accept_query)
+
+        # Обновить все остальные response того же task_id на REJECTED
+        reject_query = (
+            update(TaskResponseModel)
+            .where(TaskResponseModel.task_id == task_id, TaskResponseModel.id != response_id)
+            .values(status=TaskResponseStatusEnum.REJECTED)
+        )
+        await self.session.execute(reject_query)
+
+        # Сохранить изменения
+        await self.session.commit()
+
+    async def update_task_status(self, task_id: int):
+
+        query = (
+            update(TasksModel)
+            .where(TasksModel.id == task_id)
+            .values(status=TasksStatusEnum.PROCESSING)
+        )
+        await self.session.execute(query)
+
+        await self.session.commit()
+
 
     async def get_executor_review_counts(self, executor_id: int):
         """

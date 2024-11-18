@@ -1,5 +1,5 @@
 import locale
-from datetime import datetime
+from datetime import datetime, timedelta
 from models.enums import TasksStatusEnum
 from fastapi import Depends, HTTPException
 from starlette import status
@@ -7,7 +7,7 @@ from api.dto.tasks_dto import (TaskRequestDTO, TaskResponseDTO, TaskRequestDescr
                                ResponseByTaskIdDTO)
 from api.repositories.tasks_repository import get_tasks_repository, TasksRepository
 from models.entity import TasksModel, TaskResponseModel
-from models.enums import RolesEnum
+from models.enums import RolesEnum, TaskResponseStatusEnum
 from babel.dates import format_date
 
 class TasksService:
@@ -233,13 +233,45 @@ class TasksService:
                 ResponseByTaskIdDTO(
                     id=response.executor.id,
                     photo=response.executor.photo,
-                    created_at=self.__format_date(response.response_date),
+                    created_at=self.__get_date_description(response.response_date),
                     text=response.text,
                     rating=positive,
                 )
             )
 
         return response_array
+
+    async def response_executor_by_task_id(self, task_id: int, response_id: int, current_user: dict):
+        response = await self.tasks_repository.get_response_by_id(response_id=response_id, task_id=task_id)
+
+        if not response:
+
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Данный отклик на данную задачу не найдено"
+            )
+
+        await self.tasks_repository.update_response_status(task_id=task_id, response_id=response_id)
+        await self.tasks_repository.update_task_status(task_id=task_id)
+        return {"message": "Вы назначены исполнителем"}
+
+
+    def __get_date_description(self, input_datetime: datetime) -> str:
+        now = datetime.now()
+        today = now.date()
+        yesterday = today - timedelta(days=1)
+        day_before_yesterday = today - timedelta(days=2)
+
+        input_date = input_datetime.date()
+
+        if input_date == today:
+            return "сегодня"
+        elif input_date == yesterday:
+            return "вчера"
+        elif input_date == day_before_yesterday:
+            return "позавчера"
+        else:
+            return input_datetime.strftime("%d %B %Y")
 
     def __format_duration(self, term_from, term_to):
         # Рассчитываем разницу между датами
