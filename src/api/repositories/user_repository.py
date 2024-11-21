@@ -55,6 +55,7 @@ class UserRepository:
         return result.scalar_one_or_none()
 
     async def update_user_info(self, model):
+        self.session.add(model)
         await self.session.commit()
         await self.session.refresh(model)
         return model

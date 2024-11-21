@@ -97,6 +97,24 @@ class TasksRepository:
 
         return positive_reviews or 0, negative_reviews or 0
 
+    async def get_customer_review_counts(self, customer_id: int):
+        """
+        Подсчет количества положительных и отрицательных отзывов заказчика.
+        """
+        result = await self.session.execute(
+            select(
+                func.sum(
+                    case((ReviewModel.rating == True, 1), else_=0)
+                ).label('positive_reviews'),
+                func.sum(
+                    case((ReviewModel.rating == False, 1), else_=0)
+                ).label('negative_reviews')
+            ).where(ReviewModel.customer_id == customer_id)
+        )
+        positive_reviews, negative_reviews = result.one_or_none()
+
+        return positive_reviews or 0, negative_reviews or 0
+
     async def get_history_tasks(self, user_id: int):
         result = await self.session.execute(
             select(TasksModel).where(
@@ -105,6 +123,13 @@ class TasksRepository:
             )
         )
         return result.scalars()
+
+    async def get_tasks_count_by_customer_id(self, customer_id: int):
+        result = await self.session.execute(
+            select(func.count(TasksModel)).where(TasksModel.customer_id == customer_id)
+        )
+
+        return result.scalar_one_or_none()
 
     async def get_open_tasks(self, user_id: int):
         result = await self.session.execute(

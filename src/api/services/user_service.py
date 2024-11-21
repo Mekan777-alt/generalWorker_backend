@@ -46,11 +46,11 @@ class UserService:
         user_info = await self._get_user_info_by_role(auth_id, role_id)
 
         return UserResponseDTO(
-            firstName=user_info.firstName,
-            lastName=user_info.lastName,
+            firstName=user_info.firstName if user_info.firstName else "",
+            lastName=user_info.lastName if user_info.lastName else "",
             phoneNumber=await decrypt_phone(user_phone_number.phoneNumber),
-            location=user_info.location,
-            aboutMySelf=user_info.aboutMySelf
+            location=user_info.location if user_info.location else "",
+            aboutMySelf=user_info.aboutMySelf if user_info.aboutMySelf else "",
         )
 
 
@@ -87,11 +87,11 @@ class UserService:
         update_user = await self.user_repository.update_user_info(user_info)
 
         return UserResponseDTO(
-            firstName=update_user.firstName,
-            lastName=update_user.lastName,
+            firstName=update_user.firstName if update_user.firstName else "",
+            lastName=update_user.lastName if update_user.lastName else "",
             phoneNumber=await decrypt_phone(user_phone_number.phoneNumber),
-            location=update_user.location,
-            aboutMySelf=update_user.aboutMySelf
+            location=update_user.location if update_user.location else "",
+            aboutMySelf=update_user.aboutMySelf if update_user.aboutMySelf else "",
         )
 
 
