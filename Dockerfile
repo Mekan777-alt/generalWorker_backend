@@ -1,15 +1,19 @@
 FROM python:3.10-slim-bullseye AS builder
 
-# Устанавливаем необходимые пакеты для локалей
-RUN apt-get update && apt-get install -y locales && \
-    locale-gen ru_RU.UTF-8 && \
-    update-locale LANG=ru_RU.UTF-8 && \
-    apt-get clean
+# Устанавливаем зависимости для локалей
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    locales && \
+    rm -rf /var/lib/apt/lists/*
 
-# Устанавливаем переменные окружения для локали
-ENV LANG=ru_RU.UTF-8
-ENV LANGUAGE=ru_RU:ru
-ENV LC_ALL=ru_RU.UTF-8
+# Генерация локалей
+RUN echo "ru_RU.UTF-8 UTF-8" > /etc/locale.gen && \
+    locale-gen && \
+    update-locale LANG=ru_RU.UTF-8
+
+# Устанавливаем переменные окружения для локалей
+ENV LANG=ru_RU.UTF-8 \
+    LANGUAGE=ru_RU:ru \
+    LC_ALL=ru_RU.UTF-8
 
 WORKDIR /app
 
