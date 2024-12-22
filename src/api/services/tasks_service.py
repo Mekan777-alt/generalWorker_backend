@@ -3,11 +3,11 @@ from datetime import datetime, timedelta
 from models.enums import TasksStatusEnum
 from fastapi import Depends, HTTPException
 from starlette import status
-from api.dto.tasks_dto import (TaskRequestDTO, TaskResponseDTO, TaskRequestDescriptionDTO, CreateResponseTaskByIdDTO,
+from api.dto.tasks_dto import (TaskRequestDTO, TaskResponseDTO, CreateResponseTaskByIdDTO,
                                ResponseByTaskIdDTO)
 from api.repositories.tasks_repository import get_tasks_repository, TasksRepository
 from models.entity import TasksModel, TaskResponseModel
-from models.enums import RolesEnum, TaskResponseStatusEnum
+from models.enums import RolesEnum
 from babel.dates import format_date
 
 class TasksService:
@@ -50,6 +50,11 @@ class TasksService:
             if user_role.name == RolesEnum.CUSTOMER.value:
 
                 user_info = await self.tasks_repository.get_customer_profile(auth_id=auth_id)
+                if not user_info:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Для начало заполните свой профиль",
+                    )
                 tasks = await self.tasks_repository.get_open_tasks(user_info.id)
 
             elif user_role.name == RolesEnum.EXECUTOR.value:
@@ -61,6 +66,11 @@ class TasksService:
             if user_role.name == RolesEnum.CUSTOMER.value:
 
                 user_info = await self.tasks_repository.get_customer_profile(auth_id=auth_id)
+                if not user_info:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Для начало заполните свой профиль",
+                    )
                 tasks = await self.tasks_repository.get_history_tasks(user_info.id)
 
             elif user_role.name == RolesEnum.EXECUTOR.value:
