@@ -1,6 +1,5 @@
 from sqlalchemy import select, func, case, update
 from sqlalchemy.orm import joinedload
-
 from models.enums import TasksStatusEnum, TaskResponseStatusEnum
 from database.session import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,7 +30,7 @@ class TasksRepository:
     async def get_task_by_id(self, task_id: int):
         result = await self.session.execute(
             select(TasksModel)
-            .options(TasksModel.customer)
+            .options(joinedload(TasksModel.customer))
             .where(TasksModel.id == task_id))
         return result.scalar_one_or_none()
 

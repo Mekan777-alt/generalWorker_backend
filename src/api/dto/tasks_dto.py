@@ -32,7 +32,7 @@ class TaskResponseDTO(BaseModel):
     taskCity: str = Field(..., description="Город выполнение задание")
     taskStatus: Optional[str] = Field(..., description="Статус задания")
     isPublic: bool = Field(..., description="Флаг то что опубликовано ли задание")
-    customer: CustomerResponseDTO = Field(CustomerResponseDTO, description="Данные заказчика")
+    customer: Optional[CustomerResponseDTO] = Field(None, description="Данные заказчика")
 
 
 class ResponseByTaskIdDTO(BaseModel):
