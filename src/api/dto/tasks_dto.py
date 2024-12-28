@@ -7,6 +7,12 @@ class TaskRequestDescriptionDTO(BaseModel):
     taskDescription: str = Field(..., description="Описание задачи")
 
 
+class CustomerResponseDTO(BaseModel):
+    id: int = Field(..., description="Уникальный идентификатор")
+    firstName: str = Field(..., description="Имя заказчика")
+    lastName: str = Field(..., description="Фамилия заказчика")
+    photo: Optional[str] = Field(None, description="Uri на фотографию")
+
 
 class TaskRequestDTO(BaseModel):
     taskName: str = Field(..., description="Название задания")
@@ -26,6 +32,7 @@ class TaskResponseDTO(BaseModel):
     taskCity: str = Field(..., description="Город выполнение задание")
     taskStatus: Optional[str] = Field(..., description="Статус задания")
     isPublic: bool = Field(..., description="Флаг то что опубликовано ли задание")
+    customer: CustomerResponseDTO = Field(CustomerResponseDTO, description="Данные заказчика")
 
 
 class ResponseByTaskIdDTO(BaseModel):

@@ -29,7 +29,10 @@ class TasksRepository:
         return result.scalar_one_or_none()
 
     async def get_task_by_id(self, task_id: int):
-        result = await self.session.execute(select(TasksModel).where(TasksModel.id == task_id))
+        result = await self.session.execute(
+            select(TasksModel)
+            .options(TasksModel.customer)
+            .where(TasksModel.id == task_id))
         return result.scalar_one_or_none()
 
     async def get_response_by_task_id(self, task_id: int):

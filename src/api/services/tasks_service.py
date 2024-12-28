@@ -1,10 +1,13 @@
 import locale
 from datetime import datetime, timedelta
+
+from sqlalchemy.testing.suite.test_reflection import users
+
 from models.enums import TasksStatusEnum
 from fastapi import Depends, HTTPException
 from starlette import status
 from api.dto.tasks_dto import (TaskRequestDTO, TaskResponseDTO, CreateResponseTaskByIdDTO,
-                               ResponseByTaskIdDTO)
+                               ResponseByTaskIdDTO, CustomerResponseDTO)
 from api.repositories.tasks_repository import get_tasks_repository, TasksRepository
 from models.entity import TasksModel, TaskResponseModel
 from models.enums import RolesEnum
@@ -132,6 +135,12 @@ class TasksService:
             isPublic=task.is_public,
             taskStatus=task.status,
             taskCreated=self.__format_date(task.term_from),
+            customer=CustomerResponseDTO(
+                id=user.id,
+                firstName=user.firstName,
+                lastName=user.lastName,
+                photo=user.photo
+            )
         )
 
 

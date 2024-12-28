@@ -3,20 +3,26 @@ from typing import Annotated, Optional
 from api.dto.user_dto import UserResponseDTO
 from api.dependency.current_user import get_user_from_token
 from starlette import status
+
+from api.services.minio_service import MinioClient, get_minio_client
 from api.services.user_service import get_user_service, UserService
 
 router = APIRouter(
     tags=['Пользователи']
 )
 
-@router.get('/user', status_code=status.HTTP_200_OK, summary="Возвращает информацию о пользователе",
+@router.get('/user',
+            status_code=status.HTTP_200_OK,
+            summary="Возвращает информацию о пользователе",
             response_model=UserResponseDTO)
 async def get_me_info_endpoint(current_user: Annotated[dict, Depends(get_user_from_token)],
                     service: UserService = Depends(get_user_service)):
     return await service.get_user_info_service(current_user)
 
 
-@router.patch('/user', status_code=status.HTTP_200_OK, response_model=UserResponseDTO,
+@router.patch('/user',
+              status_code=status.HTTP_200_OK,
+              response_model=UserResponseDTO,
               summary="Частичное обновление информации о пользователе")
 async def partial_update_user_endpoint(
     current_user: Annotated[dict, Depends(get_user_from_token)],
@@ -26,7 +32,8 @@ async def partial_update_user_endpoint(
     location: Optional[str] = Form(None),
     about_my_self: Optional[str] = Form(None),
     photo: Optional[UploadFile] = File(None),
-    service: UserService = Depends(get_user_service)
+    service: UserService = Depends(get_user_service),
+    minio_client: MinioClient = Depends(get_minio_client)
 ):
     return await service.partial_update_service(current_user=current_user,
                                                 first_name=first_name,
@@ -34,5 +41,6 @@ async def partial_update_user_endpoint(
                                                 phone=phone_number,
                                                 location=location,
                                                 about_my_self=about_my_self,
-                                                photo=photo
+                                                photo=photo,
+                                                minio_client=minio_client
                                                 )

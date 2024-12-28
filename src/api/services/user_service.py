@@ -4,7 +4,8 @@ from api.dependency.encryption import decrypt_phone
 from api.dto.user_dto import UserPartialUpdateDTO, UserResponseDTO
 from api.repositories.user_repository import get_user_repository, UserRepository
 from fastapi import Depends, UploadFile
-from api.services.s3_service import s3_client
+
+from api.services.minio_service import MinioClient
 from models.enums import RolesEnum
 
 
@@ -60,7 +61,8 @@ class UserService:
                                      phone: str = None,
                                      location: str = None ,
                                      about_my_self: str = None,
-                                     photo: UploadFile = UploadFile(...)):
+                                     photo: UploadFile = UploadFile(...),
+                                     minio_client: MinioClient = None):
         auth_id = current_user.get('id')
         role_id = current_user.get('role_id')
 
@@ -80,7 +82,7 @@ class UserService:
             user_phone_number.phoneNumber = phone
             await self.user_repository.update_auth_model(user_phone_number)
         if photo:
-            photo_url = await s3_client.upload_file(photo)
+            photo_url = await minio_client.upload_photo(user=user_info.id, prefix="photos", image=photo)
             user_info.photo = photo_url
 
 
@@ -93,6 +95,12 @@ class UserService:
             location=update_user.location if update_user.location else "",
             aboutMySelf=update_user.aboutMySelf if update_user.aboutMySelf else "",
         )
+
+    async def upload_photo_service(self, photo: UploadFile, current_user: dict, minio_client: MinioClient):
+        auth_id = current_user.get('id')
+        role_id = current_user.get('role_id')
+
+        user = await self._get_user_info_by_role(auth_id, role_id)
 
 
 def get_user_service(user_repository: UserRepository = Depends(get_user_repository)):
