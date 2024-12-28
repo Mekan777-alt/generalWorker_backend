@@ -257,6 +257,8 @@ class TasksService:
             response_array.append(
                 ResponseByTaskIdDTO(
                     id=response.executor.id,
+                    firstName=response.executor.firstName,
+                    lastName=response.executor.lastName,
                     photo=response.executor.photo,
                     created_at=self.__get_date_description(response.response_date),
                     text=response.text,

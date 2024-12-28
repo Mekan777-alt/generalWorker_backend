@@ -37,6 +37,8 @@ class TaskResponseDTO(BaseModel):
 
 class ResponseByTaskIdDTO(BaseModel):
     id: int = Field(..., description="Идентификатор исполнителя")
+    firstName: str = Field(..., description="Имя исполнителя")
+    lastName: str = Field(..., description="Фамилия исполнителя")
     rating: int = Field(..., description="Рейтинг исполнителя")
     photo: Optional[str] = Field(..., description="Фото исполнителя")
     created_at: str = Field(..., description="Время отклика")
