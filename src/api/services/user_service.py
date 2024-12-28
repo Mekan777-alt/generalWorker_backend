@@ -1,5 +1,4 @@
-from sqlalchemy.util import await_only
-
+from api.dependency.encryption import encrypt_phone
 from api.dependency.encryption import decrypt_phone
 from api.dto.user_dto import UserPartialUpdateDTO, UserResponseDTO
 from api.repositories.user_repository import get_user_repository, UserRepository
@@ -80,7 +79,7 @@ class UserService:
         if about_my_self:
             user_info.aboutMySelf = about_my_self
         if phone:
-            user_phone_number.phoneNumber = phone
+            user_phone_number.phoneNumber = await encrypt_phone(phone)
             await self.user_repository.update_auth_model(user_phone_number)
         if photo:
             photo_url = await minio_client.upload_photo(user=user_info.id, prefix="photos", image=photo)
