@@ -10,7 +10,7 @@ from api.dto.tasks_dto import (TaskRequestDTO, TaskResponseDTO, CreateResponseTa
                                ResponseByTaskIdDTO, CustomerResponseDTO)
 from api.repositories.tasks_repository import get_tasks_repository, TasksRepository
 from models.entity import TasksModel, TaskResponseModel
-from models.enums import RolesEnum
+from models.enums import RolesEnum, TasksStatusEnum
 from babel.dates import format_date
 
 class TasksService:
@@ -102,7 +102,7 @@ class TasksService:
                     taskCreated=self.__format_date(task.term_from),
                     taskCity=task.location,
                     isPublic=task.is_public,
-                    taskStatus=task.status
+                    taskStatus=self._formated_status(task.status),
                 )
             )
 
@@ -139,7 +139,7 @@ class TasksService:
             taskTerm=self.__format_date(task.term_to),
             taskCity=task.location,
             isPublic=task.is_public,
-            taskStatus=task.status,
+            taskStatus=self._formated_status(task.status),
             taskCreated=self.__format_date(task.term_from),
             customer=CustomerResponseDTO(
                 id=user.id,
@@ -204,7 +204,7 @@ class TasksService:
             taskTerm=self.__format_date(task_update.term_to),
             taskCity=task_update.location,
             isPublic=task_update.is_public,
-            taskStatus=task_update.status,
+            taskStatus=self._formated_status(task_update.status),
             taskCreated=self.__format_date(task_update.term_from),
         )
 
@@ -318,6 +318,18 @@ class TasksService:
         locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
         # Форматируем дату с русским названием месяца
         return format_date(date, format="d MMMM yyyy", locale='ru')
+
+    def _formated_status(self, status: str) -> str:
+        if status == TasksStatusEnum.CREATED.value:
+            return "Создано"
+        elif status == TasksStatusEnum.PROCESSING.value:
+            return "В обработке"
+        elif status == TasksStatusEnum.COMPLETED.value:
+            return "Завершено"
+        elif status == TasksStatusEnum.CANCELLED.value:
+            return "Отменено"
+        else:
+            return "Неизвестный статус"
 
 def get_tasks_service(tasks_repository: TasksRepository = Depends(get_tasks_repository)):
     return TasksService(tasks_repository)
