@@ -60,7 +60,7 @@ services:
       - redis
     command: sh /app/utils/start_api.sh
     ports:
-      - "8000:8000"
+      - "8080:8080"
     networks:
       - workers_network
 
