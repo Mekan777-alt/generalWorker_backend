@@ -18,7 +18,7 @@ services:
       - workers_network
 
   centrifugo:
-    image: centrifugo/centrifugo
+    image: centrifugo/centrifugo:v5
     container_name: workers_centrifugo
     restart: always
     depends_on:
@@ -26,6 +26,10 @@ services:
     command: centrifugo -c /centrifugo/config.json --engine=redis --redis_address=redis://redis:6379
     ports:
       - "8000:8000"
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
     volumes:
       - ./centrifugo:/centrifugo
     networks:
