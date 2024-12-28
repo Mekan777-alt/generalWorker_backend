@@ -6,6 +6,7 @@ from api.repositories.user_repository import get_user_repository, UserRepository
 from fastapi import Depends, UploadFile
 
 from api.services.minio_service import MinioClient
+from core.config import settings
 from models.enums import RolesEnum
 
 
@@ -83,7 +84,7 @@ class UserService:
             await self.user_repository.update_auth_model(user_phone_number)
         if photo:
             photo_url = await minio_client.upload_photo(user=user_info.id, prefix="photos", image=photo)
-            user_info.photo = photo_url
+            user_info.photo = f"http://{settings.s3_settings.s3_url}/{settings.s3_settings.s3_bucket_name}/{photo_url}"
 
 
         update_user = await self.user_repository.update_user_info(user_info)
