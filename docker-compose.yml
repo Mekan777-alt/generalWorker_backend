@@ -23,11 +23,16 @@ services:
     restart: always
     depends_on:
       - redis
-    command: centrifugo -c /centrifugo/config.json
+    command: centrifugo -c /centrifugo/config.json --engine=redis --redis_host=workers_redis --redis_port=6379
     ports:
       - "7000:7000"
     volumes:
       - ./centrifugo:/centrifugo
+    ulimits:
+      nproc: 65536
+      nofile:
+        soft: 65536
+        hard: 65536
     networks:
       - workers_network
 
