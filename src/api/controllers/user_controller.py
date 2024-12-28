@@ -44,3 +44,22 @@ async def partial_update_user_endpoint(
                                                 photo=photo,
                                                 minio_client=minio_client
                                                 )
+
+@router.get('/user/customer/{customer_id}',
+            status_code=status.HTTP_200_OK,
+            response_model=UserResponseDTO,
+            summary="Получение заказчика по ID")
+async def get_customer_by_id_endpoint(customer_id: int,
+                                  current_user: Annotated[dict, Depends(get_user_from_token)],
+                                  service: UserService = Depends(get_user_service)):
+    return await service.get_customer_by_id_service(customer_id, current_user)
+
+
+@router.get('/user/executor/{executor_id}',
+            status_code=status.HTTP_200_OK,
+            response_model=UserResponseDTO,
+            summary="Получение исполнителя по ID")
+async def get_executor_by_id_endpoint(executor_id: int,
+                                      current_user: Annotated[dict, Depends(get_user_from_token)],
+                                      service: UserService = Depends(get_user_service)):
+    return await service.get_executor_by_id_service(executor_id, current_user)

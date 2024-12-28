@@ -1,8 +1,10 @@
+from starlette import status
+
 from api.dependency.encryption import encrypt_phone
 from api.dependency.encryption import decrypt_phone
 from api.dto.user_dto import UserPartialUpdateDTO, UserResponseDTO
 from api.repositories.user_repository import get_user_repository, UserRepository
-from fastapi import Depends, UploadFile
+from fastapi import Depends, UploadFile, HTTPException
 
 from api.services.minio_service import MinioClient
 from core.config import settings
@@ -96,11 +98,40 @@ class UserService:
             aboutMySelf=update_user.aboutMySelf if update_user.aboutMySelf else "",
         )
 
-    async def upload_photo_service(self, photo: UploadFile, current_user: dict, minio_client: MinioClient):
-        auth_id = current_user.get('id')
-        role_id = current_user.get('role_id')
+    async def get_customer_by_id_service(self, customer_id: int, current_user: dict):
+        customer = await self.user_repository.get_customer_by_id(customer_id)
 
-        user = await self._get_user_info_by_role(auth_id, role_id)
+        if not customer:
+            raise HTTPException(
+                detail="Заказчик не найден",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        return UserResponseDTO(
+            firstName=customer.firstName,
+            lastName=customer.lastName,
+            phoneNumber=await decrypt_phone(customer.auth_info.phoneNumber),
+            location=customer.location,
+            aboutMySelf=customer.aboutMySelf,
+            photo=customer.photo
+        )
+
+    async def get_executor_by_id_service(self, executor_id: int, current_user: dict):
+        executor = await self.user_repository.get_executor_by_id(executor_id)
+
+        if not executor:
+            raise HTTPException(
+                detail="Исполнитель не найден",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        return UserResponseDTO(
+            firstName=executor.firstName,
+            lastName=executor.lastName,
+            phoneNumber=await decrypt_phone(executor.auth_info.phoneNumber),
+            location=executor.location,
+            aboutMySelf=executor.aboutMySelf,
+            photo=executor.photo
+        )
 
 
 def get_user_service(user_repository: UserRepository = Depends(get_user_repository)):

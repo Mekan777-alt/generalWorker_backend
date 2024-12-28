@@ -1,5 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
+
 from database.session import get_session
 from fastapi import Depends
 
@@ -38,6 +40,21 @@ class UserRepository:
 
         return result.scalar_one_or_none()
 
+    async def get_customer_by_id(self, customer_id: int):
+        result = await self.session.execute(
+            select(CustomerProfileModel)
+            .options(joinedload(CustomerProfileModel.auth_info))
+            .where(CustomerProfileModel.id == customer_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def get_executor_by_id(self, executor_id: int):
+        result = await self.session.execute(
+            select(ExecutorProfileModel)
+            .options(joinedload(ExecutorProfileModel.auth_info))
+            .where(ExecutorProfileModel.id == executor_id)
+        )
+        return result.scalar_one_or_none()
 
     async def get_executor_profile(self, auth_id: int):
         result = await self.session.execute(
@@ -46,6 +63,10 @@ class UserRepository:
 
         return result.scalar_one_or_none()
 
+    async def get_user_by_id(self, user_id: int):
+        result = await self.session.execute(
+            select(User)
+        )
 
     async def get_phone_number(self, auth_id: int):
         result = await self.session.execute(
