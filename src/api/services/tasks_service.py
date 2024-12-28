@@ -220,7 +220,7 @@ class TasksService:
 
         executor = await self.tasks_repository.get_executor_profile(auth_id=auth_id)
 
-        if not executor:
+        if not executor.firstName or not executor.lastName:
 
             raise HTTPException(
                 detail="Для начало заполните анкету",
