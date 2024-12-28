@@ -17,6 +17,20 @@ services:
     networks:
       - workers_network
 
+  centrifugo:
+    image: centrifugo/centrifugo
+    container_name: workers_centrifugo
+    restart: always
+    depends_on:
+      - redis
+    command: centrifugo -c /centrifugo/config.json
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./centrifugo:/centrifugo
+    networks:
+      - workers_network
+
   redis:
     image: redis:alpine
     container_name: workers_redis
