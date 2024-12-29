@@ -13,14 +13,14 @@ class UserRepository:
         self.session = session
 
     async def create_customer_profile(self, auth_id: int):
-        new_profile = CustomerProfileModel(auth_id=auth_id)
+        new_profile = CustomerProfileModel(auth_id=auth_id, photo='http://31.129.108.27:9000/photos/default/Logo.png')
         self.session.add(new_profile)
         await self.session.commit()
         await self.session.refresh(new_profile)
         return new_profile
 
     async def create_executor_profile(self, auth_id: int):
-        new_profile = ExecutorProfileModel(auth_id=auth_id)
+        new_profile = ExecutorProfileModel(auth_id=auth_id, photo='http://31.129.108.27:9000/photos/default/Logo.png')
         self.session.add(new_profile)
         await self.session.commit()
         await self.session.refresh(new_profile)
@@ -62,11 +62,6 @@ class UserRepository:
         )
 
         return result.scalar_one_or_none()
-
-    async def get_user_by_id(self, user_id: int):
-        result = await self.session.execute(
-            select(User)
-        )
 
     async def get_phone_number(self, auth_id: int):
         result = await self.session.execute(
