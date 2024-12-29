@@ -22,7 +22,8 @@ class TasksRepository:
 
     async def get_executor_profile(self, auth_id: int):
         result = await self.session.execute(
-            select(ExecutorProfileModel).where(ExecutorProfileModel.auth_id == auth_id)
+            select(ExecutorProfileModel)
+            .where(ExecutorProfileModel.auth_id == auth_id)
         )
 
         return result.scalar_one_or_none()
