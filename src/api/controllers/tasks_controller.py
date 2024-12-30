@@ -16,7 +16,7 @@ router = APIRouter(
             )
 async def get_tasks_endpoint(current_user: Annotated[dict, Depends(get_user_from_token)],
                              filters: str = Query("tasks",
-                                                  description="Фильтры для задач, например 'tasks,history'"),
+                                                  description="Фильтры для задач, например 'tasks,history,open'"),
                              service: TasksService = Depends(get_tasks_service)):
     return await service.get_tasks_for_all_user(current_user, filters)
 

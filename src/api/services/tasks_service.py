@@ -1,16 +1,12 @@
 import locale
 from datetime import datetime, timedelta
-
-from sqlalchemy.testing.suite.test_reflection import users
-
-from models.enums import TasksStatusEnum
 from fastapi import Depends, HTTPException
 from starlette import status
 from api.dto.tasks_dto import (TaskRequestDTO, TaskResponseDTO, CreateResponseTaskByIdDTO,
                                ResponseByTaskIdDTO, CustomerResponseDTO)
 from api.repositories.tasks_repository import get_tasks_repository, TasksRepository
 from models.entity import TasksModel, TaskResponseModel
-from models.enums import RolesEnum, TasksStatusEnum
+from models.enums import RolesEnum, TasksStatusEnum, TaskResponseStatusEnum
 from babel.dates import format_date
 
 class TasksService:
@@ -86,6 +82,36 @@ class TasksService:
 
                 user_info = await self.tasks_repository.get_executor_profile(auth_id=auth_id)
                 tasks = await self.tasks_repository.get_history_executor_tasks(user_info.id)
+
+        if filters == 'open':
+            if user_role.name == RolesEnum.EXECUTOR.value:
+                user_info = await self.tasks_repository.get_executor_profile(auth_id=auth_id)
+
+                if not user_info:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Для начало заполните свой профиль",
+                    )
+
+                tasks = await self.tasks_repository.get_open_tasks_for_executor(user_info.id)
+
+                tasks_array = []
+
+                for task in tasks:
+                    tasks_array.append(
+                        TaskResponseDTO(
+                            id=task.tasks.id,
+                            taskName=task.tasks.name,
+                            taskDescription=task.tasks.description,
+                            taskPrice=task.tasks.price,
+                            taskTerm=self.__format_duration(task.tasks.term_from, task.tasks.term_to),
+                            taskCreated=self.__format_date(task.tasks.term_from),
+                            taskCity=task.tasks.location,
+                            isPublic=task.tasks.is_public,
+                            taskStatus=self._formated_status(task.status),
+                        )
+                    )
+                return tasks_array
 
         if not tasks:
 
@@ -328,6 +354,12 @@ class TasksService:
             return "Завершено"
         elif status == TasksStatusEnum.CANCELLED.value:
             return "Отменено"
+        elif status == TaskResponseStatusEnum.PENDING.value:
+            return "Ожидает"
+        elif status == TaskResponseStatusEnum.REJECTED.value:
+            return "Отклонена"
+        elif status == TaskResponseStatusEnum.ACCEPTED.value:
+            return "Принята"
         else:
             return "Неизвестный статус"
 

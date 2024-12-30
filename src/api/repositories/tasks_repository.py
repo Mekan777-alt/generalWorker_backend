@@ -136,12 +136,21 @@ class TasksRepository:
 
     async def get_open_tasks(self, user_id: int):
         result = await self.session.execute(
-            select(TasksModel).where(
+            select(TasksModel)
+            .where(
                 TasksModel.customer_id == user_id,
                 TasksModel.status.notin_([TasksStatusEnum.CANCELLED, TasksStatusEnum.COMPLETED])
             )
         )
         return result.scalars()
+
+    async def get_open_tasks_for_executor(self, executor_id: int):
+        result = await self.session.execute(
+            select(TaskResponseModel)
+            .options(joinedload(TaskResponseModel.tasks))
+            .where(TaskResponseModel.executor_id == executor_id)
+        )
+        return result.scalars().all()
 
     async def get_open_executor_tasks(self):
         result = await self.session.execute(
