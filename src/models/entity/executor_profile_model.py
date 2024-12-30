@@ -12,7 +12,7 @@ class ExecutorProfileModel(Base):
     location = Column(String, nullable=True)
     aboutMySelf = Column(String, nullable=True)
     photo = Column(String, nullable=True)
-    auth_id = Column(Integer, ForeignKey('auth.id'), nullable=True)
+    auth_id = Column(Integer, ForeignKey('auth.id', ondelete='CASCADE'), nullable=True)
 
     auth_info = relationship("AuthModel", back_populates="executor")
     responses = relationship("TaskResponseModel", back_populates="executor", cascade="all, delete-orphan")

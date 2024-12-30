@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.orm import joinedload
 
 from database.session import get_session
@@ -11,6 +11,21 @@ from models.entity import AuthModel, RoleModel, CustomerProfileModel, ExecutorPr
 class UserRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
+
+    async def get_user_by_id(self, auth_id: int):
+        result = await self.session.execute(
+            select(AuthModel)
+            .where(AuthModel.id == auth_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def delete_user(self, auth_id: int):
+        await self.session.execute(
+            delete(AuthModel)
+            .where(AuthModel.id == auth_id)
+        )
+        await self.session.commit()
+
 
     async def create_customer_profile(self, auth_id: int):
         new_profile = CustomerProfileModel(auth_id=auth_id, photo='http://31.129.108.27:9000/photos/default/Logo.png')

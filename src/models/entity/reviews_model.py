@@ -7,8 +7,8 @@ class ReviewModel(Base):
     __tablename__ = 'reviews'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    customer_id = Column(Integer, ForeignKey('customer_profile.id'), nullable=False)
-    executor_id = Column(Integer, ForeignKey('executor_profile.id'), nullable=False)
+    customer_id = Column(Integer, ForeignKey('customer_profile.id', ondelete='CASCADE'), nullable=False)
+    executor_id = Column(Integer, ForeignKey('executor_profile.id', ondelete='CASCADE'), nullable=False)
     task_id = Column(Integer, ForeignKey('tasks.id'), nullable=False)
     rating = Column(Boolean, nullable=False)  # True для "плюс", False для "минус"
     comment = Column(Text, nullable=True)  # Текст отзыва

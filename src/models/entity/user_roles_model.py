@@ -6,7 +6,7 @@ from src.database.base import Base
 class UserRolesModel(Base):
     __tablename__ = 'user_roles'
 
-    auth_id = Column(Integer, ForeignKey('auth.id'), primary_key=True)
+    auth_id = Column(Integer, ForeignKey('auth.id', ondelete='CASCADE'), primary_key=True)
     role_id = Column(Integer, ForeignKey('roles.id'), primary_key=True)
     is_use = Column(Boolean, default=False)
 

@@ -133,6 +133,18 @@ class UserService:
             photo=executor.photo
         )
 
+    async def delete_user(self, current_user: dict):
+        auth_id = current_user.get('id')
+
+        user = await self.user_repository.get_user_by_id(auth_id)
+
+        if not user:
+            raise HTTPException(
+                detail="Пользователь не найден",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        await self.user_repository.delete_user(auth_id)
 
 def get_user_service(user_repository: UserRepository = Depends(get_user_repository)):
     return UserService(user_repository)

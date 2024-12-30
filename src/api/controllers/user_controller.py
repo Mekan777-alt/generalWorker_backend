@@ -63,3 +63,13 @@ async def get_executor_by_id_endpoint(executor_id: int,
                                       current_user: Annotated[dict, Depends(get_user_from_token)],
                                       service: UserService = Depends(get_user_service)):
     return await service.get_executor_by_id_service(executor_id, current_user)
+
+
+@router.delete(
+    "/user",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Удаление аккаунта",
+)
+async def delete_acc_for_user(current_user: Annotated[dict, Depends(get_user_from_token)],
+                              service: UserService = Depends(get_user_service)):
+    return await service.delete_user(current_user)
