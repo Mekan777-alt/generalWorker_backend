@@ -1,4 +1,4 @@
-from sqlalchemy import select, func, case, update
+from sqlalchemy import select, func, case, update, not_
 from sqlalchemy.orm import joinedload
 from models.enums import TasksStatusEnum, TaskResponseStatusEnum
 from database.session import get_session
@@ -148,23 +148,30 @@ class TasksRepository:
         result = await self.session.execute(
             select(TaskResponseModel)
             .options(joinedload(TaskResponseModel.tasks))
-            .where(TaskResponseModel.executor_id == executor_id)
+            .where(
+                TaskResponseModel.executor_id == executor_id,
+            )
         )
         return result.scalars().all()
 
-    async def get_open_executor_tasks(self):
+    async def get_open_executor_tasks(self, executor_id: int):
+        subquery = select(TaskResponseModel.task_id).where(TaskResponseModel.executor_id == executor_id)
         result = await self.session.execute(
-            select(TasksModel).where(
-                TasksModel.status == TasksStatusEnum.CREATED
+            select(TasksModel)
+            .where(
+                TasksModel.status == TasksStatusEnum.CREATED,
+                not_(TasksModel.id.in_(subquery))
             )
         )
-        return result.scalars()
+        return result.scalars().all()
 
     async def get_history_executor_tasks(self, user_id: int):
         result = await self.session.execute(
             select(TasksModel)
             .join(TaskResponseModel, TaskResponseModel.task_id == TasksModel.id)
-            .where(TaskResponseModel.executor_id == user_id)
+            .where(TaskResponseModel.executor_id == user_id,
+                   TasksModel.status.in_([TasksStatusEnum.COMPLETED, TasksStatusEnum.CANCELLED])
+            )
         )
 
         return result.scalars()

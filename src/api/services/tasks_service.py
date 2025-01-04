@@ -64,7 +64,9 @@ class TasksService:
 
             elif user_role.name == RolesEnum.EXECUTOR.value:
 
-                tasks = await self.tasks_repository.get_open_executor_tasks()
+                executor_info = await self.tasks_repository.get_executor_profile(auth_id=auth_id)
+
+                tasks = await self.tasks_repository.get_open_executor_tasks(executor_info.id)
 
         if filters == 'history':
 
@@ -346,19 +348,19 @@ class TasksService:
         return format_date(date, format="d MMMM yyyy", locale='ru')
 
     def _formated_status(self, status: str) -> str:
-        if status == TasksStatusEnum.CREATED.value:
+        if status == TasksStatusEnum.CREATED:
             return "Создано"
-        elif status == TasksStatusEnum.PROCESSING.value:
+        elif status == TasksStatusEnum.PROCESSING:
             return "В обработке"
-        elif status == TasksStatusEnum.COMPLETED.value:
+        elif status == TasksStatusEnum.COMPLETED:
             return "Завершено"
-        elif status == TasksStatusEnum.CANCELLED.value:
+        elif status == TasksStatusEnum.CANCELLED:
             return "Отменено"
-        elif status == TaskResponseStatusEnum.PENDING.value:
+        elif status == TaskResponseStatusEnum.PENDING:
             return "Ожидает"
-        elif status == TaskResponseStatusEnum.REJECTED.value:
+        elif status == TaskResponseStatusEnum.REJECTED:
             return "Отклонена"
-        elif status == TaskResponseStatusEnum.ACCEPTED.value:
+        elif status == TaskResponseStatusEnum.ACCEPTED:
             return "Принята"
         else:
             return "Неизвестный статус"

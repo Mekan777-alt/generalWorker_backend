@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Form, UploadFile, File
+from fastapi import APIRouter, Depends, Form, UploadFile, File, Path
 from typing import Annotated, Optional
 from api.dto.user_dto import UserResponseDTO
 from api.dependency.current_user import get_user_from_token
@@ -70,6 +70,26 @@ async def get_executor_by_id_endpoint(executor_id: int,
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Удаление аккаунта",
 )
-async def delete_acc_for_user(current_user: Annotated[dict, Depends(get_user_from_token)],
+async def delete_acc_for_user_endpoint(current_user: Annotated[dict, Depends(get_user_from_token)],
                               service: UserService = Depends(get_user_service)):
     return await service.delete_user(current_user)
+
+@router.get(
+    "/user/executor/rating",
+    status_code=status.HTTP_200_OK,
+    summary="Рейтинг исполнителя"
+)
+async def get_rating_by_executor_endpoint(current_user: Annotated[dict, Depends(get_user_from_token)],
+                                 service: UserService = Depends(get_user_service)):
+    pass
+
+@router.get(
+    "/user/customer/rating",
+    status_code=status.HTTP_200_OK,
+    summary="Рейтинг заказчика"
+)
+async def get_rating_by_customer_endpoint(
+        current_user: Annotated[dict, Depends(get_user_from_token)],
+        service: UserService = Depends(get_user_service)
+):
+    pass
