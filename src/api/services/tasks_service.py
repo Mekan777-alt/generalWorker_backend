@@ -2,8 +2,10 @@ import locale
 from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException
 from starlette import status
+
 from api.dto.tasks_dto import (TaskRequestDTO, TaskResponseDTO, CreateResponseTaskByIdDTO,
                                ResponseByTaskIdDTO, CustomerResponseDTO)
+from api.firebase.utils import db
 from api.repositories.tasks_repository import get_tasks_repository, TasksRepository
 from models.entity import TasksModel, TaskResponseModel
 from models.enums import RolesEnum, TasksStatusEnum, TaskResponseStatusEnum
@@ -237,6 +239,9 @@ class TasksService:
         )
 
     async def response_task_by_id(self, task_id: int, current_user: dict, data: CreateResponseTaskByIdDTO):
+        """
+        Создание отклика, комнаты и сообщения в Firebase Firestore.
+        """
         auth_id = int(current_user.get('id'))
         task = await self.tasks_repository.get_task_by_id(task_id)
 
@@ -249,21 +254,54 @@ class TasksService:
         executor = await self.tasks_repository.get_executor_profile(auth_id=auth_id)
 
         if not executor:
-
             raise HTTPException(
-                detail="Для начало заполните анкету",
+                detail="Для начала заполните анкету",
                 status_code=status.HTTP_400_BAD_REQUEST
             )
+
+        existing_response = await self.tasks_repository.existing_response(task.id, executor.id)
+
+        if existing_response:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Отклик уже отправлен"
+            )
+
+        # Проверка на существование комнаты
+        rooms_ref = db.collection("rooms")
+
+        # Создание комнаты
+        new_room_data = {
+            "name": task.name,
+            "task_id": task_id,
+            "executor_id": executor.id,
+            "customer_id": task.customer_id,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        new_room_ref = rooms_ref.document()
+        new_room_ref.set(new_room_data)
+
+        # Создание сообщения
+        messages_ref = new_room_ref.collection("messages")
+        new_message_data = {
+            "user_id": executor.id,  # Автор сообщения — исполнитель
+            "content": data.text,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        new_message_ref = messages_ref.document()
+        new_message_ref.set(new_message_data)
 
         new_response = TaskResponseModel(
             task_id=task_id,
             executor_id=executor.id,
-            text=data.text
+            text=data.text,
+            status=TaskResponseStatusEnum.PENDING,
+            room_uuid=new_room_ref.id
         )
 
-        await self.tasks_repository.add_response_task(new_response)
+        await self.tasks_repository.create_task_response(new_response)
 
-        return {"message": "Отклик на задачу успешно добавлен"}
+        return {"message": "Отклик успешно отправлен, комната создана", "room_id": new_response.room_uuid}
 
     async def get_response_by_task_id(self, task_id: int, current_user: dict):
         task = await self.tasks_repository.get_task_by_id(task_id)

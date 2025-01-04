@@ -1,3 +1,4 @@
+
 from sqlalchemy import select, func, case, update, not_
 from sqlalchemy.orm import joinedload
 from models.enums import TasksStatusEnum, TaskResponseStatusEnum
@@ -19,7 +20,6 @@ class TasksRepository:
 
         return result.scalar_one_or_none()
 
-
     async def get_executor_profile(self, auth_id: int):
         result = await self.session.execute(
             select(ExecutorProfileModel)
@@ -28,12 +28,27 @@ class TasksRepository:
 
         return result.scalar_one_or_none()
 
+    async def existing_response(self, task_id: int, executor_id: int):
+        result = await self.session.execute(
+            select(TaskResponseModel).where(
+                TaskResponseModel.task_id == task_id,
+                TaskResponseModel.executor_id == executor_id
+            )
+        )
+        return result.scalar_one_or_none()
+
     async def get_task_by_id(self, task_id: int):
         result = await self.session.execute(
             select(TasksModel)
             .options(joinedload(TasksModel.customer))
             .where(TasksModel.id == task_id))
         return result.scalar_one_or_none()
+
+    async def create_task_response(self, model: TaskResponseModel):
+        self.session.add(model)
+        await self.session.commit()
+        await self.session.refresh(model)
+        return model
 
     async def get_response_by_task_id(self, task_id: int):
         result = await self.session.execute(
