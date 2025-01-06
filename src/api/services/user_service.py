@@ -2,7 +2,8 @@ from starlette import status
 
 from api.dependency.encryption import encrypt_phone
 from api.dependency.encryption import decrypt_phone
-from api.dto.user_dto import UserPartialUpdateDTO, UserResponseDTO
+from api.dto.user_dto import UserResponseDTO, ExecutorRatingDTO, ReviewDTO, CustomerRatingDTO
+from api.repositories.tasks_repository import TasksRepository, get_tasks_repository
 from api.repositories.user_repository import get_user_repository, UserRepository
 from fastapi import Depends, UploadFile, HTTPException
 
@@ -12,8 +13,9 @@ from models.enums import RolesEnum
 
 
 class UserService:
-    def __init__(self, user_repository: UserRepository):
+    def __init__(self, user_repository: UserRepository, task_repository: TasksRepository):
         self.user_repository = user_repository
+        self.task_repository = task_repository
 
     async def _get_user_info_by_role(self, auth_id: int, role_id: int):
         """
@@ -40,6 +42,53 @@ class UserService:
             return executor
 
         raise ValueError(f"Unexpected role: {user_role.name}")
+
+
+    async def get_executor_rating(self, current_user: dict):
+        auth_id = current_user.get('id')
+        executor = await self.user_repository.get_executor_profile(auth_id)
+
+        if not executor:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No executor found"
+            )
+
+        completed_task_count = await self.task_repository.completed_task_count_executor(executor.id)
+        total_earnings = await self.task_repository.total_earning_executor(executor.id)
+        review_array = await self.task_repository.review_executor(executor.id)
+
+        return ExecutorRatingDTO(
+            rating="Супер (Топ-10)",
+            tasks_completed=completed_task_count,
+            total_earnings=total_earnings,
+            review_array=[ReviewDTO(
+                comment=review.comment,
+                rating="positive" if review.rating else "negative",
+                created_at=review.created_at.isoformat(),
+                author_name=review.firstName,
+                author_photo=review.photo,
+            ) for review in review_array]
+        )
+
+
+
+    async def get_customer_rating(self, current_user: dict):
+        auth_id = current_user.get('id')
+        customer = await self.user_repository.get_customer_profile(auth_id)
+
+        if not customer:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No customer found"
+            )
+
+        count_task_created = await self.task_repository.customer_create_task_count(customer.id)
+
+        return CustomerRatingDTO(
+            rating="Супер (Топ-10)",
+            tasks_created=count_task_created,
+        )
 
     async def get_user_info_service(self, current_user: dict):
         auth_id = current_user.get('id')
@@ -146,5 +195,6 @@ class UserService:
 
         await self.user_repository.delete_user(auth_id)
 
-def get_user_service(user_repository: UserRepository = Depends(get_user_repository)):
-    return UserService(user_repository)
+def get_user_service(user_repository: UserRepository = Depends(get_user_repository),
+                     task_repository: TasksRepository = Depends(get_tasks_repository)):
+    return UserService(user_repository, task_repository)

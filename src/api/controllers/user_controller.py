@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Form, UploadFile, File, Path
 from typing import Annotated, Optional
-from api.dto.user_dto import UserResponseDTO
+
+from api.dto.user_dto import UserResponseDTO, ExecutorRatingDTO, CustomerRatingDTO
 from api.dependency.current_user import get_user_from_token
 from starlette import status
 
@@ -45,6 +46,29 @@ async def partial_update_user_endpoint(
                                                 minio_client=minio_client
                                                 )
 
+@router.get(
+    "/user/executor/rating",
+    status_code=status.HTTP_200_OK,
+    summary="Рейтинг исполнителя",
+    response_model=ExecutorRatingDTO
+)
+async def get_rating_by_executor_endpoint(current_user: Annotated[dict, Depends(get_user_from_token)],
+                                 service: UserService = Depends(get_user_service)):
+    return await service.get_executor_rating(current_user)
+
+@router.get(
+    "/user/customer/rating",
+    status_code=status.HTTP_200_OK,
+    summary="Рейтинг заказчика",
+    response_model=CustomerRatingDTO
+)
+async def get_rating_by_customer_endpoint(
+        current_user: Annotated[dict, Depends(get_user_from_token)],
+        service: UserService = Depends(get_user_service)
+):
+    return await service.get_customer_rating(current_user)
+
+
 @router.get('/user/customer/{customer_id}',
             status_code=status.HTTP_200_OK,
             response_model=UserResponseDTO,
@@ -73,23 +97,3 @@ async def get_executor_by_id_endpoint(executor_id: int,
 async def delete_acc_for_user_endpoint(current_user: Annotated[dict, Depends(get_user_from_token)],
                               service: UserService = Depends(get_user_service)):
     return await service.delete_user(current_user)
-
-@router.get(
-    "/user/executor/rating",
-    status_code=status.HTTP_200_OK,
-    summary="Рейтинг исполнителя"
-)
-async def get_rating_by_executor_endpoint(current_user: Annotated[dict, Depends(get_user_from_token)],
-                                 service: UserService = Depends(get_user_service)):
-    pass
-
-@router.get(
-    "/user/customer/rating",
-    status_code=status.HTTP_200_OK,
-    summary="Рейтинг заказчика"
-)
-async def get_rating_by_customer_endpoint(
-        current_user: Annotated[dict, Depends(get_user_from_token)],
-        service: UserService = Depends(get_user_service)
-):
-    pass

@@ -13,6 +13,49 @@ class TasksRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    async def customer_create_task_count(self, customer_id: int):
+        result = await self.session.execute(
+            select(func.count(TasksModel.id))
+            .where(TasksModel.customer_id == customer_id)
+        )
+        return result.scalar() or 0
+
+    async def completed_task_count_executor(self, executor_id: int):
+        result = await self.session.execute(
+            select(func.count(TaskResponseModel.id))
+            .where(
+                TaskResponseModel.executor_id == executor_id,
+                TasksModel.status == TasksStatusEnum.COMPLETED
+            )
+        )
+        return result.scalar() or 0
+
+    async def total_earning_executor(self, executor_id: int):
+        result = await self.session.execute(
+            select(func.sum(TasksModel.price))
+            .join(TaskResponseModel, TaskResponseModel.task_id == TasksModel.id)
+            .where(
+                TaskResponseModel.executor_id == executor_id,
+                TasksModel.status == TasksStatusEnum.COMPLETED
+            )
+        )
+        return result.scalar() or 0
+
+    async def review_executor(self, executor_id: int):
+        reviews_query = await self.session.execute(
+            select(
+                ReviewModel.comment,
+                ReviewModel.rating,
+                ReviewModel.created_at,
+                CustomerProfileModel.firstName,
+                CustomerProfileModel.photo
+            )
+            .join(CustomerProfileModel, ReviewModel.customer_id == CustomerProfileModel.id)
+            .where(ReviewModel.executor_id == executor_id)
+            .order_by(ReviewModel.created_at.desc())
+        )
+        return reviews_query.fetchall()
+
     async def get_customer_profile(self, auth_id: int):
         result = await self.session.execute(
             select(CustomerProfileModel).where(CustomerProfileModel.auth_id == auth_id)
