@@ -13,6 +13,7 @@ class TaskResponseModel(Base):
     status = Column(Enum(TaskResponseStatusEnum), default=TaskResponseStatusEnum.PENDING, nullable=False)
     text = Column(String, nullable=True)
     response_date = Column(DateTime, default=datetime.utcnow)
+    room_uuid = Column(String, nullable=True)
 
     tasks = relationship("TasksModel", back_populates="responses")
     executor = relationship("ExecutorProfileModel", back_populates="responses")
