@@ -142,7 +142,7 @@ class TasksService:
         auth_id = int(current_user.get('id'))
         user = await self.tasks_repository.get_customer_profile(auth_id=auth_id)
 
-        if not user:
+        if not user or not user.firstName or not user.lastName:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Для начало заполните профиль заказчика",
