@@ -112,6 +112,7 @@ class TasksService:
                             taskCreated=self.__format_date(task.tasks.term_from),
                             taskCity=task.tasks.location,
                             isPublic=task.tasks.is_public,
+                            roomUUID=task.room_uuid,
                             taskStatus=self._formated_status(task.status),
                         )
                     )
