@@ -98,6 +98,7 @@ class UserService:
         user_info = await self._get_user_info_by_role(auth_id, role_id)
 
         return UserResponseDTO(
+            id=user_info.id,
             firstName=user_info.firstName if user_info.firstName else "",
             lastName=user_info.lastName if user_info.lastName else "",
             phoneNumber=await decrypt_phone(user_phone_number.phoneNumber),
@@ -140,6 +141,7 @@ class UserService:
         update_user = await self.user_repository.update_user_info(user_info)
 
         return UserResponseDTO(
+            id=update_user.id,
             firstName=update_user.firstName if update_user.firstName else "",
             lastName=update_user.lastName if update_user.lastName else "",
             phoneNumber=await decrypt_phone(user_phone_number.phoneNumber),
@@ -156,6 +158,7 @@ class UserService:
                 status_code=status.HTTP_404_NOT_FOUND,
             )
         return UserResponseDTO(
+            id=customer.id,
             firstName=customer.firstName,
             lastName=customer.lastName,
             phoneNumber=await decrypt_phone(customer.auth_info.phoneNumber),
@@ -174,6 +177,7 @@ class UserService:
             )
 
         return UserResponseDTO(
+            id=executor.id,
             firstName=executor.firstName,
             lastName=executor.lastName,
             phoneNumber=await decrypt_phone(executor.auth_info.phoneNumber),
