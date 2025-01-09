@@ -44,6 +44,7 @@ class ResponseByTaskIdDTO(BaseModel):
     photo: Optional[str] = Field(..., description="Фото исполнителя")
     created_at: str = Field(..., description="Время отклика")
     text: str = Field(..., description="Текст отклика")
+    roomUUID: Optional[str] = Field(None, description="ID комнаты")
 
 
 class CreateResponseTaskByIdDTO(BaseModel):

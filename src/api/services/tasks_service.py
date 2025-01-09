@@ -57,6 +57,7 @@ class TasksService:
             if user_role.name == RolesEnum.CUSTOMER.value:
 
                 user_info = await self.tasks_repository.get_customer_profile(auth_id=auth_id)
+
                 if not user_info:
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
@@ -67,6 +68,12 @@ class TasksService:
             elif user_role.name == RolesEnum.EXECUTOR.value:
 
                 executor_info = await self.tasks_repository.get_executor_profile(auth_id=auth_id)
+
+                if not executor_info:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Для начало заполните свой профиль",
+                    )
 
                 tasks = await self.tasks_repository.get_open_executor_tasks(executor_info.id)
 
@@ -285,7 +292,7 @@ class TasksService:
         # Создание сообщения
         messages_ref = new_room_ref.collection("messages")
         new_message_data = {
-            "user_id": executor.id,  # Автор сообщения — исполнитель
+            "senderId": executor.id,  # Автор сообщения — исполнитель
             "content": data.text,
             "created_at": datetime.utcnow().isoformat()
         }
@@ -330,6 +337,7 @@ class TasksService:
                     created_at=self.__get_date_description(response.response_date),
                     text=response.text,
                     rating=positive,
+                    roomUUID=response.room_uuid
                 )
             )
 
