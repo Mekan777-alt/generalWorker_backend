@@ -6,7 +6,7 @@ import jwt
 
 from api.dependency.encryption import encrypt_phone
 from datetime import datetime, timedelta, timezone
-from models.entity import AuthModel, UserRolesModel
+from models.entity import AuthModel, UserRolesModel, UserProfileModel
 from fastapi import Depends, HTTPException
 from starlette import status
 from api.repositories.auth_repository import get_auth_repository, AuthRepository
@@ -32,7 +32,14 @@ class AuthService:
                 otpExpiry=datetime.utcnow() + timedelta(minutes=5),
             )
 
-            auth_model = await self.auth_repository.create_user(user)
+            await self.auth_repository.create_user(user)
+
+            profile = UserProfileModel(
+                photo='http://31.129.108.27:9000/photos/default/Logo.png',
+                auth_id=user.id
+            )
+
+            await self.auth_repository.create_profile(profile)
 
             roles = await self.auth_repository.get_roles()
             user_role = []
@@ -44,7 +51,7 @@ class AuthService:
                     is_use = True
 
                 new_role = UserRolesModel(
-                    auth_id=auth_model.id,
+                    user_id=profile.id,
                     role_id=role.id,
                     is_use=is_use,
                 )
@@ -109,7 +116,7 @@ class AuthService:
 
         await self.auth_repository.update_user(auth)
 
-        user_role = await self.auth_repository.get_auth_roles(auth.id)
+        user_role = await self.auth_repository.get_auth_roles(auth.user_profile.id)
 
         access_token, refresh_token = await self.__create_tokens({"id": auth.id,
                                                                   "phoneNumber": auth.phoneNumber,

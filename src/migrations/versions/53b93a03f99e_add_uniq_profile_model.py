@@ -1,8 +1,8 @@
-"""add customer and executor profile
+"""add uniq profile model
 
-Revision ID: e086d9bc7069
+Revision ID: 53b93a03f99e
 Revises: 
-Create Date: 2024-11-16 11:34:08.035310
+Create Date: 2025-01-09 16:09:05.703322
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'e086d9bc7069'
+revision: str = '53b93a03f99e'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -42,42 +42,17 @@ def upgrade() -> None:
     sa.Column('price', sa.Numeric(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('customer_profile',
+    op.create_table('user_profile',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('firstName', sa.String(), nullable=True),
-    sa.Column('lastName', sa.String(), nullable=True),
+    sa.Column('first_name', sa.String(), nullable=True),
+    sa.Column('last_name', sa.String(), nullable=True),
     sa.Column('location', sa.String(), nullable=True),
-    sa.Column('aboutMySelf', sa.String(), nullable=True),
+    sa.Column('about_myself', sa.String(), nullable=True),
     sa.Column('photo', sa.String(), nullable=True),
-    sa.Column('auth_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['auth_id'], ['auth.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('executor_profile',
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('firstName', sa.String(), nullable=True),
-    sa.Column('lastName', sa.String(), nullable=True),
-    sa.Column('location', sa.String(), nullable=True),
-    sa.Column('aboutMySelf', sa.String(), nullable=True),
-    sa.Column('photo', sa.String(), nullable=True),
-    sa.Column('auth_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['auth_id'], ['auth.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('user_roles',
     sa.Column('auth_id', sa.Integer(), nullable=False),
-    sa.Column('role_id', sa.Integer(), nullable=False),
-    sa.Column('is_use', sa.Boolean(), nullable=True),
-    sa.ForeignKeyConstraint(['auth_id'], ['auth.id'], ),
-    sa.ForeignKeyConstraint(['role_id'], ['roles.id'], ),
-    sa.PrimaryKeyConstraint('auth_id', 'role_id')
-    )
-    op.create_table('user_roles_rating',
-    sa.Column('role_id', sa.Integer(), nullable=False),
-    sa.Column('plus', sa.Integer(), nullable=True),
-    sa.Column('minus', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['role_id'], ['roles.id'], ),
-    sa.PrimaryKeyConstraint('role_id')
+    sa.ForeignKeyConstraint(['auth_id'], ['auth.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('auth_id')
     )
     op.create_table('tasks',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -90,7 +65,28 @@ def upgrade() -> None:
     sa.Column('is_public', sa.Boolean(), nullable=True),
     sa.Column('status', sa.Enum('CREATED', 'PROCESSING', 'COMPLETED', 'CANCELLED', name='tasksstatusenum'), nullable=True),
     sa.Column('customer_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['customer_id'], ['customer_profile.id'], ),
+    sa.ForeignKeyConstraint(['customer_id'], ['user_profile.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('user_roles',
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('role_id', sa.Integer(), nullable=False),
+    sa.Column('is_use', sa.Boolean(), nullable=True),
+    sa.ForeignKeyConstraint(['role_id'], ['roles.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user_profile.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('user_id', 'role_id')
+    )
+    op.create_table('reviews',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('customer_id', sa.Integer(), nullable=False),
+    sa.Column('executor_id', sa.Integer(), nullable=False),
+    sa.Column('task_id', sa.Integer(), nullable=False),
+    sa.Column('rating', sa.Boolean(), nullable=False),
+    sa.Column('comment', sa.Text(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['customer_id'], ['user_profile.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['executor_id'], ['user_profile.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['task_id'], ['tasks.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('task_responses',
@@ -98,8 +94,10 @@ def upgrade() -> None:
     sa.Column('task_id', sa.Integer(), nullable=False),
     sa.Column('executor_id', sa.Integer(), nullable=False),
     sa.Column('status', sa.Enum('PENDING', 'ACCEPTED', 'REJECTED', name='taskresponsestatusenum'), nullable=False),
+    sa.Column('text', sa.String(), nullable=True),
     sa.Column('response_date', sa.DateTime(), nullable=True),
-    sa.ForeignKeyConstraint(['executor_id'], ['executor_profile.id'], ondelete='CASCADE'),
+    sa.Column('room_uuid', sa.String(), nullable=True),
+    sa.ForeignKeyConstraint(['executor_id'], ['user_profile.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['task_id'], ['tasks.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -109,11 +107,10 @@ def upgrade() -> None:
 def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_table('task_responses')
-    op.drop_table('tasks')
-    op.drop_table('user_roles_rating')
+    op.drop_table('reviews')
     op.drop_table('user_roles')
-    op.drop_table('executor_profile')
-    op.drop_table('customer_profile')
+    op.drop_table('tasks')
+    op.drop_table('user_profile')
     op.drop_table('subscriptions')
     op.drop_table('roles')
     op.drop_table('auth')

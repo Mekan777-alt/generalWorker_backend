@@ -5,8 +5,8 @@ from models.enums import TasksStatusEnum, TaskResponseStatusEnum
 from database.session import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
-from models.entity import TasksModel, RoleModel, CustomerProfileModel, ExecutorProfileModel, TaskResponseModel, \
-    ReviewModel
+from models.entity import TasksModel, RoleModel, TaskResponseModel, \
+    ReviewModel, UserProfileModel
 
 
 class TasksRepository:
@@ -47,10 +47,10 @@ class TasksRepository:
                 ReviewModel.comment,
                 ReviewModel.rating,
                 ReviewModel.created_at,
-                CustomerProfileModel.firstName,
-                CustomerProfileModel.photo
+                UserProfileModel.first_name,
+                UserProfileModel.photo
             )
-            .join(CustomerProfileModel, ReviewModel.customer_id == CustomerProfileModel.id)
+            .join(UserProfileModel, ReviewModel.customer_id == UserProfileModel.id)
             .where(ReviewModel.executor_id == executor_id)
             .order_by(ReviewModel.created_at.desc())
         )
@@ -58,15 +58,16 @@ class TasksRepository:
 
     async def get_customer_profile(self, auth_id: int):
         result = await self.session.execute(
-            select(CustomerProfileModel).where(CustomerProfileModel.auth_id == auth_id)
+            select(UserProfileModel)
+            .where(UserProfileModel.auth_id == auth_id)
         )
 
         return result.scalar_one_or_none()
 
     async def get_executor_profile(self, auth_id: int):
         result = await self.session.execute(
-            select(ExecutorProfileModel)
-            .where(ExecutorProfileModel.auth_id == auth_id)
+            select(UserProfileModel)
+            .where(UserProfileModel.auth_id == auth_id)
         )
 
         return result.scalar_one_or_none()
@@ -205,7 +206,7 @@ class TasksRepository:
     async def get_open_tasks_for_executor(self, executor_id: int):
         result = await self.session.execute(
             select(TaskResponseModel)
-            .options(joinedload(TaskResponseModel.tasks))
+            .options(joinedload(TaskResponseModel.task))
             .where(
                 TaskResponseModel.executor_id == executor_id,
             )

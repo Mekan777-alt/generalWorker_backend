@@ -150,7 +150,7 @@ class TasksService:
         auth_id = int(current_user.get('id'))
         user = await self.tasks_repository.get_customer_profile(auth_id=auth_id)
 
-        if not user or not user.firstName or not user.lastName:
+        if not user or not user.first_name or not user.last_name:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Для начало заполните профиль заказчика",
@@ -181,8 +181,8 @@ class TasksService:
             taskCreated=self.__format_date(task.term_from),
             customer=CustomerResponseDTO(
                 id=user.id,
-                firstName=user.firstName,
-                lastName=user.lastName,
+                firstName=user.first_name,
+                lastName=user.last_name,
                 photo=user.photo
             )
         )
@@ -331,8 +331,8 @@ class TasksService:
             response_array.append(
                 ResponseByTaskIdDTO(
                     id=response.executor.id,
-                    firstName=response.executor.firstName,
-                    lastName=response.executor.lastName,
+                    firstName=response.executor.first_name,
+                    lastName=response.executor.last_name,
                     photo=response.executor.photo,
                     created_at=self.__get_date_description(response.response_date),
                     text=response.text,

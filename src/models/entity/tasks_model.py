@@ -17,9 +17,8 @@ class TasksModel(Base):
     location = Column(String, nullable=False)
     is_public = Column(Boolean, default=False)
     status = Column(Enum(TasksStatusEnum), default=TasksStatusEnum.CREATED)
-    customer_id = Column(Integer, ForeignKey('customer_profile.id', ondelete='CASCADE'), nullable=False)
+    customer_id = Column(Integer, ForeignKey('user_profile.id', ondelete='CASCADE'), nullable=False)
 
-    customer = relationship("CustomerProfileModel", back_populates="tasks")
-    responses = relationship("TaskResponseModel", back_populates="tasks", cascade="all, delete-orphan")
-    reviews = relationship("ReviewModel", back_populates="task")  # Отзывы, связанные с задачей
-
+    customer = relationship("UserProfileModel", back_populates="tasks")
+    responses = relationship("TaskResponseModel", back_populates="task", cascade="all, delete-orphan")
+    reviews = relationship("ReviewModel", back_populates="task", cascade="all, delete-orphan")

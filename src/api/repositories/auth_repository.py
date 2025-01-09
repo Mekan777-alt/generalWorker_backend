@@ -1,10 +1,10 @@
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 from database.session import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from fastapi import Depends
 from typing import List
-from models.entity import AuthModel,  RoleModel, UserRolesModel
+from models.entity import AuthModel, RoleModel, UserRolesModel, UserProfileModel
 
 
 class AuthRepository:
@@ -31,9 +31,11 @@ class AuthRepository:
         result = await self.session.execute(select(RoleModel).where(RoleModel.id == role_id))
         return result.scalar_one_or_none()
 
-    async def get_auth_roles(self, auth_id: int):
+    async def get_auth_roles(self, profile_id: int):
         result = await self.session.execute(
-            select(UserRolesModel).where(UserRolesModel.auth_id == auth_id, UserRolesModel.is_use == True))
+            select(UserRolesModel)
+            .where(UserRolesModel.user_id == profile_id,
+                   UserRolesModel.is_use == True))
         return result.scalar_one_or_none()
 
     async def create_role_to_user(self, models: List[UserRolesModel]):
@@ -71,7 +73,11 @@ class AuthRepository:
         return result.scalar_one_or_none()
 
     async def get_user_by_verify_code(self, verify_code: str) -> AuthModel:
-        result = await self.session.execute(select(AuthModel).where(AuthModel.otpCode == verify_code))
+        result = await self.session.execute(
+            select(AuthModel)
+            .options(joinedload(AuthModel.user_profile))
+            .where(AuthModel.otpCode == verify_code)
+        )
         return result.scalar_one_or_none()
 
     async def get_user_by_phone_number(self, phone_number: str) -> AuthModel:
@@ -91,6 +97,11 @@ class AuthRepository:
         await self.session.refresh(model)
         return model
 
+    async def create_profile(self, model: UserProfileModel):
+        self.session.add(model)
+        await self.session.commit()
+        await self.session.refresh(model)
+        return model
 
 def get_auth_repository(session: AsyncSession = Depends(get_session)) -> AuthRepository:
     return AuthRepository(session)

@@ -16,6 +16,5 @@ class AuthModel(Base):
                         comment="Дата последнего обновления записи")
     isActive = Column(Boolean, default=False)
 
-    customer = relationship("CustomerProfileModel", back_populates="auth_info", cascade="all, delete, delete-orphan")
-    executor = relationship("ExecutorProfileModel", back_populates="auth_info", cascade="all, delete, delete-orphan")
-    user_roles = relationship('UserRolesModel', back_populates='auth_roles', cascade="all, delete, delete-orphan")
+    user_profile = relationship("UserProfileModel", back_populates="auth", uselist=False, cascade="all, delete-orphan")
+    # user_roles = relationship('UserRolesModel', back_populates='auth', cascade="all, delete-orphan")

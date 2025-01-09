@@ -26,18 +26,10 @@ class UserService:
         if user_role.name == RolesEnum.CUSTOMER.value:
             customer = await self.user_repository.get_customer_profile(auth_id)
 
-            if not customer:
-
-                return await self.user_repository.create_customer_profile(auth_id)
-
             return customer
 
         if user_role.name == RolesEnum.EXECUTOR.value:
             executor = await self.user_repository.get_executor_profile(auth_id)
-
-            if not executor:
-
-                return await self.user_repository.create_executor_profile(auth_id)
 
             return executor
 
@@ -99,11 +91,12 @@ class UserService:
 
         return UserResponseDTO(
             id=user_info.id,
-            firstName=user_info.firstName if user_info.firstName else "",
-            lastName=user_info.lastName if user_info.lastName else "",
+            firstName=user_info.first_name if user_info.first_name else "",
+            lastName=user_info.last_name if user_info.last_name else "",
             phoneNumber=await decrypt_phone(user_phone_number.phoneNumber),
             location=user_info.location if user_info.location else "",
-            aboutMySelf=user_info.aboutMySelf if user_info.aboutMySelf else "",
+            aboutMySelf=user_info.about_myself if user_info.about_myself else "",
+            photo=user_info.photo
         )
 
 
