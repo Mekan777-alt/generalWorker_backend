@@ -127,7 +127,7 @@ class UserService:
             user_phone_number.phoneNumber = await encrypt_phone(phone)
             await self.user_repository.update_auth_model(user_phone_number)
         if photo:
-            photo_url = await minio_client.upload_photo(user=user_info.id, prefix="photos", image=photo)
+            photo_url = minio_client.upload_photo(user=user_info.id, prefix="photos", image=photo)
             user_info.photo = f"http://{settings.s3_settings.s3_url}/{settings.s3_settings.s3_bucket_name}/{photo_url}"
 
 

@@ -17,6 +17,7 @@ from api.controllers.auth_controller import router as auth_router
 from api.controllers.user_controller import router as user_router
 from api.controllers.tasks_controller import router as tasks_router
 from api.controllers.subscription_controller import router as subscription_router
+from api.controllers.faq_controller import router as faq_router
 
 
 
@@ -69,3 +70,4 @@ app.include_router(user_router)
 app.include_router(tasks_router)
 app.include_router(auth_router)
 app.include_router(subscription_router)
+app.include_router(faq_router)

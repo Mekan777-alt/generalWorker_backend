@@ -7,3 +7,7 @@ from .subscription_user_model import SubscriptionModel
 from .user_roles_model import UserRolesModel
 from .tasks_response_model import TaskResponseModel
 from .reviews_model import ReviewModel
+from .faq_model import FAQModel
+from .question_request_model import QuestionRequestModel
+from .question_request_photo_model import QuestionRequestPhotoModel
+

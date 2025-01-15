@@ -23,3 +23,5 @@ class UserProfileModel(Base):
     reviews_left = relationship("ReviewModel", foreign_keys="ReviewModel.customer_id", back_populates="customer")
     reviews_received = relationship("ReviewModel", foreign_keys="ReviewModel.executor_id", back_populates="executor")
     subscriptions = relationship('SubscriptionModel', back_populates='user')
+    questions = relationship('QuestionRequestModel', back_populates='user')
+
