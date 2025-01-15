@@ -11,9 +11,16 @@ class AuthRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    async def get_profile_by_auth_id(self, auth_id: int):
+        result = await self.session.execute(
+            select(UserProfileModel)
+            .where(UserProfileModel.auth_id == auth_id)
+        )
+        return result.scalar_one_or_none()
+
     async def get_auth_and_role_id_model(self, auth_id: int, role_id: int):
         result = await self.session.execute(
-            select(UserRolesModel).where(UserRolesModel.auth_id == auth_id,
+            select(UserRolesModel).where(UserRolesModel.user_id == auth_id,
                                          UserRolesModel.role_id == role_id)
         )
         return result.scalar_one_or_none()

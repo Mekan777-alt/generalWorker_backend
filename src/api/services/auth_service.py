@@ -192,7 +192,9 @@ class AuthService:
         auth_id = int(current_user.get('id'))
         phone_number = current_user.get('phoneNumber')
 
-        use_role = await self.auth_repository.get_auth_roles(auth_id)
+        profile = await self.auth_repository.get_profile_by_auth_id(auth_id)
+
+        use_role = await self.auth_repository.get_auth_roles(profile.id)
 
         if use_role:
             use_role.is_use = False

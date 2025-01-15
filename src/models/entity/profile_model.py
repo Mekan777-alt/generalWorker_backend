@@ -22,3 +22,4 @@ class UserProfileModel(Base):
     responses = relationship("TaskResponseModel", back_populates="executor", cascade="all, delete-orphan")
     reviews_left = relationship("ReviewModel", foreign_keys="ReviewModel.customer_id", back_populates="customer")
     reviews_received = relationship("ReviewModel", foreign_keys="ReviewModel.executor_id", back_populates="executor")
+    subscriptions = relationship('SubscriptionModel', back_populates='user')
