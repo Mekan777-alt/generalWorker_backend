@@ -135,11 +135,11 @@ class UserService:
 
         return UserResponseDTO(
             id=update_user.id,
-            firstName=update_user.firstName if update_user.firstName else "",
-            lastName=update_user.lastName if update_user.lastName else "",
+            firstName=update_user.first_name if update_user.first_name else "",
+            lastName=update_user.last_name if update_user.last_name else "",
             phoneNumber=await decrypt_phone(user_phone_number.phoneNumber),
             location=update_user.location if update_user.location else "",
-            aboutMySelf=update_user.aboutMySelf if update_user.aboutMySelf else "",
+            aboutMySelf=update_user.about_myself if update_user.about_myself else "",
         )
 
     async def get_customer_by_id_service(self, customer_id: int, current_user: dict):
@@ -152,11 +152,11 @@ class UserService:
             )
         return UserResponseDTO(
             id=customer.id,
-            firstName=customer.firstName,
-            lastName=customer.lastName,
+            firstName=customer.first_name,
+            lastName=customer.last_name,
             phoneNumber=await decrypt_phone(customer.auth_info.phoneNumber),
             location=customer.location,
-            aboutMySelf=customer.aboutMySelf,
+            aboutMySelf=customer.about_myself,
             photo=customer.photo
         )
 
@@ -171,11 +171,11 @@ class UserService:
 
         return UserResponseDTO(
             id=executor.id,
-            firstName=executor.firstName,
-            lastName=executor.lastName,
+            firstName=executor.first_name,
+            lastName=executor.last_name,
             phoneNumber=await decrypt_phone(executor.auth_info.phoneNumber),
             location=executor.location,
-            aboutMySelf=executor.aboutMySelf,
+            aboutMySelf=executor.about_myself,
             photo=executor.photo
         )
 
