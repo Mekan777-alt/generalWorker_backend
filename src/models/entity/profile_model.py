@@ -16,7 +16,7 @@ class UserProfileModel(Base):
     auth_id = Column(Integer, ForeignKey('auth.id', ondelete='CASCADE'), nullable=False, unique=True)
 
     auth = relationship("AuthModel", back_populates="user_profile")
-    roles = relationship("RoleModel", secondary="user_roles", back_populates="users")
+    user_roles = relationship('UserRolesModel', back_populates="user")
 
     tasks = relationship("TasksModel", back_populates="customer")
     responses = relationship("TaskResponseModel", back_populates="executor", cascade="all, delete-orphan")

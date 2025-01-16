@@ -11,4 +11,5 @@ class RoleModel(Base):
     name = Column(String, unique=True, nullable=False)
 
     # user_roles = relationship('UserRolesModel', back_populates='role_roles')
-    users = relationship("UserProfileModel", secondary="user_roles", back_populates="roles")
+    # users = relationship("UserProfileModel", secondary="user_roles", back_populates="roles")
+    user_roles = relationship('UserRolesModel', back_populates="role")

@@ -69,6 +69,13 @@ class AuthService:
         #         status_code=status.HTTP_400_BAD_REQUEST
         #     )
 
+        for user_role in auth.user_profile.user_roles:
+
+            if user_role.role.name == request.role:
+                user_role.is_use = True
+            else:
+                user_role.is_use = False
+
         auth.otpCode = verification_code
         auth.otpExpiry = datetime.utcnow() + timedelta(minutes=5)
 

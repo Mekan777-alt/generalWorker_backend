@@ -89,9 +89,15 @@ class AuthRepository:
 
     async def get_user_by_phone_number(self, phone_number: str) -> AuthModel:
         result = await self.session.execute(
-            select(AuthModel).where(AuthModel.phoneNumber == phone_number)
+            select(AuthModel)
+            .options(
+                joinedload(AuthModel.user_profile)
+                .joinedload(UserProfileModel.user_roles)
+                .joinedload(UserRolesModel.role)
+            )
+            .where(AuthModel.phoneNumber == phone_number)
         )
-        return result.scalar_one_or_none()
+        return result.unique().scalar_one_or_none()
 
     async def update_user(self, model: AuthModel):
         await self.session.commit()

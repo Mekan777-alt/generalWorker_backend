@@ -10,5 +10,5 @@ class UserRolesModel(Base):
     role_id = Column(Integer, ForeignKey('roles.id'), primary_key=True)
     is_use = Column(Boolean, default=False)
 
-    user = relationship('UserProfileModel', backref="user_roles")
-    role = relationship('RoleModel', backref="user_roles")
+    user = relationship('UserProfileModel', back_populates="user_roles")
+    role = relationship('RoleModel', back_populates="user_roles")
