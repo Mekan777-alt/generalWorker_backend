@@ -116,13 +116,13 @@ class UserService:
 
 
         if first_name:
-            user_info.firstName = first_name
+            user_info.first_name = first_name
         if last_name:
-            user_info.lastName = last_name
+            user_info.last_name = last_name
         if location:
             user_info.location = location
         if about_my_self:
-            user_info.aboutMySelf = about_my_self
+            user_info.about_myself = about_my_self
         if phone:
             user_phone_number.phoneNumber = await encrypt_phone(phone)
             await self.user_repository.update_auth_model(user_phone_number)
