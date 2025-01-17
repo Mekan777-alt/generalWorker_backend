@@ -8,7 +8,7 @@ from api.dto.tasks_dto import (TaskRequestDTO, TaskResponseDTO, CreateResponseTa
 from api.firebase.utils import db
 from api.repositories.tasks_repository import get_tasks_repository, TasksRepository
 from models.entity import TasksModel, TaskResponseModel
-from models.enums import RolesEnum, TasksStatusEnum, TaskResponseStatusEnum
+from models.enums import RolesEnum, TasksStatusEnum
 from babel.dates import format_date
 
 class TasksService:
@@ -165,7 +165,7 @@ class TasksService:
             location=data.taskCity,
             is_public=True,
             customer_id=user.id,
-            status=TasksStatusEnum.PROCESSING
+            status=TasksStatusEnum.SEARCH
         )
 
         task = await self.tasks_repository.create_task(new_task)
@@ -304,7 +304,6 @@ class TasksService:
             task_id=task_id,
             executor_id=executor.id,
             text=data.text,
-            status=TaskResponseStatusEnum.PENDING,
             room_uuid=new_room_ref.id
         )
 
@@ -354,7 +353,6 @@ class TasksService:
                 detail="Данный отклик на данную задачу не найдено"
             )
 
-        await self.tasks_repository.update_response_status(task_id=task_id, response_id=response_id)
         await self.tasks_repository.update_task_status(task_id=task_id)
         return {"message": "Вы назначены исполнителем"}
 
@@ -396,20 +394,14 @@ class TasksService:
         return format_date(date, format="d MMMM yyyy", locale='ru')
 
     def _formated_status(self, status: str) -> str:
-        if status == TasksStatusEnum.CREATED:
-            return "Создано"
-        elif status == TasksStatusEnum.PROCESSING:
+        if status == TasksStatusEnum.WORK:
+            return "В работе"
+        elif status == TasksStatusEnum.SEARCH:
             return "Поиск исполнителя"
         elif status == TasksStatusEnum.COMPLETED:
             return "Завершено"
         elif status == TasksStatusEnum.CANCELLED:
             return "Отменено"
-        elif status == TaskResponseStatusEnum.PENDING:
-            return "Ожидает"
-        elif status == TaskResponseStatusEnum.REJECTED:
-            return "Отклонена"
-        elif status == TaskResponseStatusEnum.ACCEPTED:
-            return "Принята"
         else:
             return "Неизвестный статус"
 

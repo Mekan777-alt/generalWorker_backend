@@ -16,7 +16,7 @@ class TasksModel(Base):
     term_to = Column(DateTime, nullable=False)
     location = Column(String, nullable=False)
     is_public = Column(Boolean, default=False)
-    status = Column(Enum(TasksStatusEnum), default=TasksStatusEnum.CREATED)
+    status = Column(Enum(TasksStatusEnum), default=TasksStatusEnum.SEARCH)
     customer_id = Column(Integer, ForeignKey('user_profile.id', ondelete='CASCADE'), nullable=False)
 
     customer = relationship("UserProfileModel", back_populates="tasks")
