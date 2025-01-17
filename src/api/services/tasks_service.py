@@ -36,8 +36,8 @@ class TasksService:
             taskStatus=task.status,
             customer=CustomerResponseDTO(
                 id=task.customer.id,
-                firstName=task.customer.firstName,
-                lastName=task.customer.lastName,
+                firstName=task.customer.first_name,
+                lastName=task.customer.last_name,
                 photo=task.customer.photo
             )
         )
