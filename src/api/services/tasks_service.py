@@ -33,7 +33,7 @@ class TasksService:
             taskCreated=self.__format_date(task.term_from),
             taskCity=task.location,
             isPublic=task.is_public,
-            taskStatus=task.status,
+            taskStatus=self._formated_status(task.status),
             customer=CustomerResponseDTO(
                 id=task.customer.id,
                 firstName=task.customer.first_name,
@@ -111,14 +111,14 @@ class TasksService:
                 for task in tasks:
                     tasks_array.append(
                         TaskResponseDTO(
-                            id=task.tasks.id,
-                            taskName=task.tasks.name,
-                            taskDescription=task.tasks.description,
-                            taskPrice=task.tasks.price,
-                            taskTerm=self.__format_duration(task.tasks.term_from, task.tasks.term_to),
-                            taskCreated=self.__format_date(task.tasks.term_from),
-                            taskCity=task.tasks.location,
-                            isPublic=task.tasks.is_public,
+                            id=task.task.id,
+                            taskName=task.task.name,
+                            taskDescription=task.task.description,
+                            taskPrice=task.task.price,
+                            taskTerm=self.__format_duration(task.task.term_from, task.task.term_to),
+                            taskCreated=self.__format_date(task.task.term_from),
+                            taskCity=task.task.location,
+                            isPublic=task.task.is_public,
                             roomUUID=task.room_uuid,
                             taskStatus=self._formated_status(task.status),
                         )
@@ -163,8 +163,9 @@ class TasksService:
             term_to=data.taskTerm.replace(tzinfo=None),
             term_from=datetime.utcnow(),
             location=data.taskCity,
+            is_public=True,
             customer_id=user.id,
-            status=TasksStatusEnum.CREATED
+            status=TasksStatusEnum.PROCESSING
         )
 
         task = await self.tasks_repository.create_task(new_task)
@@ -398,7 +399,7 @@ class TasksService:
         if status == TasksStatusEnum.CREATED:
             return "Создано"
         elif status == TasksStatusEnum.PROCESSING:
-            return "В обработке"
+            return "Поиск исполнителя"
         elif status == TasksStatusEnum.COMPLETED:
             return "Завершено"
         elif status == TasksStatusEnum.CANCELLED:

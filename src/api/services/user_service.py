@@ -54,11 +54,11 @@ class UserService:
             rating="Супер (Топ-10)",
             tasks_completed=completed_task_count,
             total_earnings=total_earnings,
-            review_array=[ReviewDTO(
+            reviews=[ReviewDTO(
                 comment=review.comment,
                 rating="positive" if review.rating else "negative",
-                created_at=review.created_at.isoformat(),
-                author_name=review.firstName,
+                created_at=review.created_at.date().strftime("%d.%m-%Y"),
+                author_name=review.first_name,
                 author_photo=review.photo,
             ) for review in review_array]
         )

@@ -84,9 +84,10 @@ class TasksRepository:
     async def get_task_by_id(self, task_id: int):
         result = await self.session.execute(
             select(TasksModel)
-            .options(joinedload(TasksModel.customer))
+            .options(
+                joinedload(TasksModel.customer), joinedload(TasksModel.responses))
             .where(TasksModel.id == task_id))
-        return result.scalar_one_or_none()
+        return result.unique().scalar_one_or_none()
 
     async def create_task_response(self, model: TaskResponseModel):
         self.session.add(model)
