@@ -1,7 +1,9 @@
 
 from sqlalchemy import select, func, case, update, not_
 from sqlalchemy.orm import joinedload
-from models.enums import TasksStatusEnum
+from sqlalchemy.testing import not_in
+
+from models.enums import TasksStatusEnum, ResponseStatus
 from database.session import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
@@ -99,47 +101,66 @@ class TasksRepository:
         result = await self.session.execute(
             select(TaskResponseModel)
             .options(joinedload(TaskResponseModel.executor))
-            .where(TaskResponseModel.task_id == task_id)
+            .where(TaskResponseModel.task_id == task_id,
+                   TaskResponseModel.status == ResponseStatus.EXPECTATION)
         )
         return result.scalars().all()
 
     async def get_response_by_id(self, response_id: int, task_id: int):
         result = await self.session.execute(
-            select(TaskResponseModel).where(TaskResponseModel.id == response_id,
-                                            TaskResponseModel.task_id == task_id)
+            select(TaskResponseModel)
+            .where(
+            TaskResponseModel.id == response_id,
+                        TaskResponseModel.task_id == task_id
+            )
         )
         return result.scalar_one_or_none()
 
-    # async def update_response_status(self, response_id: int, task_id: int):
-    #     # Обновить выбранный response на ACCEPTED
-    #     accept_query = (
-    #         update(TaskResponseModel)
-    #         .where(TaskResponseModel.id == response_id, TaskResponseModel.task_id == task_id)
-    #         .values(status=TaskResponseStatusEnum.ACCEPTED)
-    #     )
-    #     await self.session.execute(accept_query)
+    async def update_response_status(self, response_id: int, task_id: int):
+        # Обновить выбранный response на ACCEPTED
+        accept_query = (
+            update(TaskResponseModel)
+            .where(TaskResponseModel.id == response_id, TaskResponseModel.task_id == task_id)
+            .values(status=ResponseStatus.ACCEPTED)
+        )
+        await self.session.execute(accept_query)
+
+        # Обновить все остальные response того же task_id на REJECTED
+        reject_query = (
+            update(TaskResponseModel)
+            .where(TaskResponseModel.task_id == task_id, TaskResponseModel.id != response_id)
+            .values(status=ResponseStatus.REJECTED)
+        )
+        await self.session.execute(reject_query)
+
+        # Сохранить изменения
+        await self.session.commit()
+
+    # async def update_task_status(self, task_id: int):
     #
-    #     # Обновить все остальные response того же task_id на REJECTED
-    #     reject_query = (
-    #         update(TaskResponseModel)
-    #         .where(TaskResponseModel.task_id == task_id, TaskResponseModel.id != response_id)
-    #         .values(status=TaskResponseStatusEnum.REJECTED)
+    #     query = (
+    #         update(TasksModel)
+    #         .where(TasksModel.id == task_id)
+    #         .values(status=TasksStatusEnum.WORK)
     #     )
-    #     await self.session.execute(reject_query)
+    #     await self.session.execute(query)
     #
-    #     # Сохранить изменения
     #     await self.session.commit()
 
-    async def update_task_status(self, task_id: int):
 
-        query = (
-            update(TasksModel)
-            .where(TasksModel.id == task_id)
-            .values(status=TasksStatusEnum.WORK)
-        )
-        await self.session.execute(query)
-
+    async def update_response_task_model(self, model: TaskResponseModel):
+        self.session.add(model)
         await self.session.commit()
+        await self.session.refresh(model)
+        return model
+
+    async def get_task_response_by_id(self, task_id: int):
+        result = await self.session.execute(
+            select(TaskResponseModel)
+            .options(joinedload(TaskResponseModel.task))
+            .where(TaskResponseModel.task_id == task_id)
+        )
+        return result.scalar_one_or_none()
 
 
     async def get_executor_review_counts(self, executor_id: int):
@@ -182,7 +203,9 @@ class TasksRepository:
         result = await self.session.execute(
             select(TasksModel).where(
                 TasksModel.customer_id == user_id,
-                TasksModel.status.notin_([TasksStatusEnum.CREATED, TasksStatusEnum.PROCESSING])
+                TasksModel.status.notin_(
+                    [TasksStatusEnum.SEARCH, TasksStatusEnum.WORK]
+                )
             )
         )
         return result.scalars()
@@ -210,17 +233,21 @@ class TasksRepository:
             .options(joinedload(TaskResponseModel.task))
             .where(
                 TaskResponseModel.executor_id == executor_id,
+                TaskResponseModel.status == ResponseStatus.ACCEPTED
             )
         )
         return result.scalars().all()
 
     async def get_open_executor_tasks(self, executor_id: int):
         subquery = select(TaskResponseModel.task_id).where(TaskResponseModel.executor_id == executor_id)
+
+        # Выполнение основного запроса
         result = await self.session.execute(
             select(TasksModel)
             .where(
-                TasksModel.status == TasksStatusEnum.CREATED,
-                not_(TasksModel.id.in_(subquery))
+                TasksModel.status == TasksStatusEnum.SEARCH,
+                ~TasksModel.id.in_(subquery),  # Инверсия условия IN
+                TasksModel.customer_id != executor_id  # Условие "не равно"
             )
         )
         return result.scalars().all()

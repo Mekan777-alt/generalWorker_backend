@@ -140,6 +140,7 @@ class UserService:
             phoneNumber=await decrypt_phone(user_phone_number.phoneNumber),
             location=update_user.location if update_user.location else "",
             aboutMySelf=update_user.about_myself if update_user.about_myself else "",
+            photo=update_user.photo
         )
 
     async def get_customer_by_id_service(self, customer_id: int, current_user: dict):

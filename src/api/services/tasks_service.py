@@ -8,7 +8,7 @@ from api.dto.tasks_dto import (TaskRequestDTO, TaskResponseDTO, CreateResponseTa
 from api.firebase.utils import db
 from api.repositories.tasks_repository import get_tasks_repository, TasksRepository
 from models.entity import TasksModel, TaskResponseModel
-from models.enums import RolesEnum, TasksStatusEnum
+from models.enums import RolesEnum, TasksStatusEnum, ResponseStatus
 from babel.dates import format_date
 
 class TasksService:
@@ -120,7 +120,7 @@ class TasksService:
                             taskCity=task.task.location,
                             isPublic=task.task.is_public,
                             roomUUID=task.room_uuid,
-                            taskStatus=self._formated_status(task.status),
+                            taskStatus=self._formated_status(task.task.status),
                         )
                     )
                 return tasks_array
@@ -262,7 +262,7 @@ class TasksService:
 
         executor = await self.tasks_repository.get_executor_profile(auth_id=auth_id)
 
-        if not executor:
+        if not executor.first_name or not executor.last_name:
             raise HTTPException(
                 detail="Для начала заполните анкету",
                 status_code=status.HTTP_400_BAD_REQUEST
@@ -285,7 +285,8 @@ class TasksService:
             "task_id": task_id,
             "executor_id": executor.id,
             "customer_id": task.customer_id,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.utcnow().isoformat(),
+            "is_response": True,
         }
         new_room_ref = rooms_ref.document()
         new_room_ref.set(new_room_data)
@@ -304,7 +305,8 @@ class TasksService:
             task_id=task_id,
             executor_id=executor.id,
             text=data.text,
-            room_uuid=new_room_ref.id
+            room_uuid=new_room_ref.id,
+            status=ResponseStatus.EXPECTATION
         )
 
         await self.tasks_repository.create_task_response(new_response)
@@ -330,7 +332,7 @@ class TasksService:
 
             response_array.append(
                 ResponseByTaskIdDTO(
-                    id=response.executor.id,
+                    id=response.id,
                     firstName=response.executor.first_name,
                     lastName=response.executor.last_name,
                     photo=response.executor.photo,
@@ -353,8 +355,24 @@ class TasksService:
                 detail="Данный отклик на данную задачу не найдено"
             )
 
-        await self.tasks_repository.update_task_status(task_id=task_id)
+        await self.tasks_repository.update_response_status(task_id=task_id, response_id=response_id)
         return {"message": "Вы назначены исполнителем"}
+
+    async def done_task_by_id_service(self, task_id: int, current_user: dict):
+        response = await self.tasks_repository.get_task_response_by_id(task_id)
+
+        if not response:
+            raise HTTPException(
+                detail="Task not found",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        response.task.status = TasksStatusEnum.COMPLETED
+
+
+        await self.tasks_repository.update_response_task_model(response)
+
+        return {"message": "Задача выполнена"}
 
 
     def __get_date_description(self, input_datetime: datetime) -> str:
