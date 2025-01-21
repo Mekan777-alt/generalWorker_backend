@@ -5,3 +5,4 @@ class TasksStatusEnum(PyEnum):
     WORK = 'WORK'
     COMPLETED = 'COMPLETED'
     CANCELLED = 'CANCELLED'
+    UNDER_REVIEW = 'UNDER_REVIEW'

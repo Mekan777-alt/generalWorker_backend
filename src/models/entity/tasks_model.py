@@ -20,5 +20,6 @@ class TasksModel(Base):
     customer_id = Column(Integer, ForeignKey('user_profile.id', ondelete='CASCADE'), nullable=False)
 
     customer = relationship("UserProfileModel", back_populates="tasks")
-    responses = relationship("TaskResponseModel", back_populates="task", cascade="all, delete-orphan")
+    responses = relationship("TaskResponseModel", back_populates="task", cascade="all, delete-orphan",
+                             uselist=False)
     reviews = relationship("ReviewModel", back_populates="task", cascade="all, delete-orphan")

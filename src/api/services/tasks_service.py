@@ -111,16 +111,16 @@ class TasksService:
                 for task in tasks:
                     tasks_array.append(
                         TaskResponseDTO(
-                            id=task.task.id,
-                            taskName=task.task.name,
-                            taskDescription=task.task.description,
-                            taskPrice=task.task.price,
-                            taskTerm=self.__format_duration(task.task.term_from, task.task.term_to),
-                            taskCreated=self.__format_date(task.task.term_from),
-                            taskCity=task.task.location,
-                            isPublic=task.task.is_public,
-                            roomUUID=task.room_uuid,
-                            taskStatus=self._formated_status(task.task.status),
+                            id=task.id,
+                            taskName=task.name,
+                            taskDescription=task.description,
+                            taskPrice=task.price,
+                            taskTerm=self.__format_duration(task.term_from, task.term_to),
+                            taskCreated=self.__format_date(task.term_from),
+                            taskCity=task.location,
+                            isPublic=task.is_public,
+                            roomUUID=task.responses.room_uuid,
+                            taskStatus=self._formated_status(task.status),
                         )
                     )
                 return tasks_array
@@ -373,6 +373,20 @@ class TasksService:
         await self.tasks_repository.update_response_task_model(response)
 
         return {"message": "Задача выполнена"}
+
+    async def send_review_task_by_id(self, task_id: int, current_user: dict):
+        response = await self.tasks_repository.get_task_response_by_id(task_id)
+
+        if not response:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Task not found"
+            )
+
+        response.task.status = TasksStatusEnum.UNDER_REVIEW
+        await self.tasks_repository.update_response_task_model(response)
+
+        return {"message": "Задание отправлено на проверку"}
 
 
     def __get_date_description(self, input_datetime: datetime) -> str:

@@ -25,6 +25,7 @@ class TasksRepository:
     async def completed_task_count_executor(self, executor_id: int):
         result = await self.session.execute(
             select(func.count(TaskResponseModel.id))
+            .join(TasksModel, TaskResponseModel.task_id == TasksModel.id)
             .where(
                 TaskResponseModel.executor_id == executor_id,
                 TasksModel.status == TasksStatusEnum.COMPLETED
@@ -133,6 +134,13 @@ class TasksRepository:
         )
         await self.session.execute(reject_query)
 
+        update_status_query = (
+            update(TasksModel)
+            .where(TasksModel.id == task_id)
+            .values(status=TasksStatusEnum.WORK)
+        )
+
+        await self.session.execute(update_status_query)
         # Сохранить изменения
         await self.session.commit()
 
@@ -229,14 +237,16 @@ class TasksRepository:
 
     async def get_open_tasks_for_executor(self, executor_id: int):
         result = await self.session.execute(
-            select(TaskResponseModel)
-            .options(joinedload(TaskResponseModel.task))
+            select(TasksModel)
+            .options(joinedload(TasksModel.responses))
             .where(
-                TaskResponseModel.executor_id == executor_id,
-                TaskResponseModel.status == ResponseStatus.ACCEPTED
+                TasksModel.responses.has(
+                    TaskResponseModel.executor_id == executor_id
+                ),
+                TasksModel.status.in_([TasksStatusEnum.WORK])
             )
         )
-        return result.scalars().all()
+        return result.unique().scalars().all()
 
     async def get_open_executor_tasks(self, executor_id: int):
         subquery = select(TaskResponseModel.task_id).where(TaskResponseModel.executor_id == executor_id)

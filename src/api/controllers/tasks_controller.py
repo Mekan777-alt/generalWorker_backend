@@ -97,8 +97,18 @@ async def response_task_by_response_id_endpoint(task_id: int,
     return await service.response_executor_by_task_id(task_id, response_id, current_user)
 
 
+@router.post('/tasks/{task_id}/review',
+             status_code=status.HTTP_200_OK,
+             summary="Отправка на проверку",
+            )
+async def send_review_from_executor_endpoint(task_id: int,
+                                             current_user: Annotated[dict, Depends(get_user_from_token)],
+                                             service: TasksService = Depends(get_tasks_service)):
+    return await service.send_review_task_by_id(task_id, current_user)
+
+
 @router.post('/tasks/{task_id}/done',
-             summary="Завершение задания",
+             summary="Подтверждение задачи на статус ВЫПОЛНЕНО",
              status_code=status.HTTP_200_OK
              )
 async def done_workflow_endpoint(task_id: int,
