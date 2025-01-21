@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter, Query
+from fastapi import Depends, APIRouter, Query, BackgroundTasks
 from starlette import status
 from typing import Annotated, List
 from api.dependency.current_user import get_user_from_token
@@ -71,10 +71,12 @@ async def confirm_task_endpoint(task_id: int,
              status_code=status.HTTP_201_CREATED,
              )
 async def response_task_endpoint(task_id: int,
+                                 background_task: BackgroundTasks,
                                  data: CreateResponseTaskByIdDTO,
                                  current_user: Annotated[dict, Depends(get_user_from_token)],
-                                 service: TasksService = Depends(get_tasks_service)):
-    return await service.response_task_by_id(task_id, current_user, data)
+                                 service: TasksService = Depends(get_tasks_service),
+                                 ):
+    return await service.response_task_by_id(task_id, current_user, data, background_task)
 
 @router.get('/tasks/{task_id}/response',
             summary="Возвращает массив откликов на данную задачу",

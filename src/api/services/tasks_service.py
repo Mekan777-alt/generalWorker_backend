@@ -1,6 +1,6 @@
 import locale
 from datetime import datetime, timedelta
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, BackgroundTasks
 from starlette import status
 
 from api.dto.tasks_dto import (TaskRequestDTO, TaskResponseDTO, CreateResponseTaskByIdDTO,
@@ -247,7 +247,8 @@ class TasksService:
             taskCreated=self.__format_date(task_update.term_from),
         )
 
-    async def response_task_by_id(self, task_id: int, current_user: dict, data: CreateResponseTaskByIdDTO):
+    async def response_task_by_id(self, task_id: int, current_user: dict, data: CreateResponseTaskByIdDTO,
+                                  background_task: BackgroundTasks):
         """
         Создание отклика, комнаты и сообщения в Firebase Firestore.
         """
@@ -276,42 +277,50 @@ class TasksService:
                 detail="Отклик уже отправлен"
             )
 
-        # Проверка на существование комнаты
-        rooms_ref = db.collection("rooms")
-
-        # Создание комнаты
-        new_room_data = {
-            "name": task.name,
-            "task_id": task_id,
-            "executor_id": executor.id,
-            "customer_id": task.customer_id,
-            "created_at": datetime.utcnow().isoformat(),
-            "is_response": True,
-        }
-        new_room_ref = rooms_ref.document()
-        new_room_ref.set(new_room_data)
-
-        # Создание сообщения
-        messages_ref = new_room_ref.collection("messages")
-        new_message_data = {
-            "senderId": executor.id,  # Автор сообщения — исполнитель
-            "content": data.text,
-            "created_at": datetime.utcnow().isoformat()
-        }
-        new_message_ref = messages_ref.document()
-        new_message_ref.set(new_message_data)
+        # # Проверка на существование комнаты
+        # rooms_ref = db.collection("rooms")
+        #
+        # # Создание комнаты
+        # new_room_data = {
+        #     "name": task.name,
+        #     "task_id": task_id,
+        #     "executor_id": executor.id,
+        #     "customer_id": task.customer_id,
+        #     "created_at": datetime.utcnow().isoformat(),
+        #     "is_response": True,
+        # }
+        # new_room_ref = rooms_ref.document()
+        # new_room_ref.set(new_room_data)
+        #
+        # # Создание сообщения
+        # messages_ref = new_room_ref.collection("messages")
+        # new_message_data = {
+        #     "senderId": executor.id,  # Автор сообщения — исполнитель
+        #     "content": data.text,
+        #     "created_at": datetime.utcnow().isoformat()
+        # }
+        # new_message_ref = messages_ref.document()
+        # new_message_ref.set(new_message_data)
 
         new_response = TaskResponseModel(
             task_id=task_id,
             executor_id=executor.id,
             text=data.text,
-            room_uuid=new_room_ref.id,
             status=ResponseStatus.EXPECTATION
         )
 
         await self.tasks_repository.create_task_response(new_response)
 
-        return {"message": "Отклик успешно отправлен, комната создана", "room_id": new_response.room_uuid}
+        background_task.add_task(
+            self.__create_room_and_message,
+            task=task,
+            executor=executor,
+            data=data,
+            response=new_response
+        )
+
+        return {"message": "Отклик успешно отправлен, комната создается в фоне"}
+
 
     async def get_response_by_task_id(self, task_id: int, current_user: dict):
         task = await self.tasks_repository.get_task_by_id(task_id)
@@ -436,6 +445,38 @@ class TasksService:
             return "Отменено"
         else:
             return "Неизвестный статус"
+
+    async def __create_room_and_message(self, task, executor, data, response):
+        """
+        Создание комнаты и сообщения в Firebase Firestore.
+        """
+        rooms_ref = db.collection("rooms")
+
+        # Создание комнаты
+        new_room_data = {
+            "name": task.name,
+            "task_id": task.id,
+            "executor_id": executor.id,
+            "customer_id": task.customer_id,
+            "created_at": datetime.utcnow().isoformat(),
+            "is_response": True,
+        }
+        new_room_ref = rooms_ref.document()
+        new_room_ref.set(new_room_data)
+
+        # Создание сообщения
+        messages_ref = new_room_ref.collection("messages")
+        new_message_data = {
+            "senderId": executor.id,  # Автор сообщения — исполнитель
+            "content": data.text,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        new_message_ref = messages_ref.document()
+        new_message_ref.set(new_message_data)
+
+        # Обновление room_uuid в TaskResponseModel
+        response.room_uuid = new_room_ref.id
+        await self.tasks_repository.update_task_response(response)
 
 def get_tasks_service(tasks_repository: TasksRepository = Depends(get_tasks_repository)):
     return TasksService(tasks_repository)

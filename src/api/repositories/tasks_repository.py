@@ -15,6 +15,12 @@ class TasksRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    async def update_task_response(self, model: TaskResponseModel):
+        self.session.add(model)
+        await self.session.commit()
+        await self.session.refresh(model)
+        return model
+
     async def customer_create_task_count(self, customer_id: int):
         result = await self.session.execute(
             select(func.count(TasksModel.id))
