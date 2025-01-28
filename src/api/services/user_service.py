@@ -155,7 +155,7 @@ class UserService:
             id=customer.id,
             firstName=customer.first_name,
             lastName=customer.last_name,
-            phoneNumber=await decrypt_phone(customer.auth_info.phoneNumber),
+            phoneNumber=await decrypt_phone(customer.auth.phoneNumber),
             location=customer.location,
             aboutMySelf=customer.about_myself,
             photo=customer.photo
@@ -174,7 +174,7 @@ class UserService:
             id=executor.id,
             firstName=executor.first_name,
             lastName=executor.last_name,
-            phoneNumber=await decrypt_phone(executor.auth_info.phoneNumber),
+            phoneNumber=await decrypt_phone(executor.auth.phoneNumber),
             location=executor.location,
             aboutMySelf=executor.about_myself,
             photo=executor.photo
