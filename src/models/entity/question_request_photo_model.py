@@ -1,6 +1,6 @@
 from sqlalchemy.orm import relationship
 
-from src.database.base import Base
+from database.base import Base
 from sqlalchemy import Column, String, Integer, ForeignKey
 
 class QuestionRequestPhotoModel(Base):

@@ -1,5 +1,5 @@
-from src.database.base import Base
-from sqlalchemy import Column, Integer, String, ForeignKey
+from database.base import Base
+from sqlalchemy import Column, Integer, String
 
 
 class FAQModel(Base):

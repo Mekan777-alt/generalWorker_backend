@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 
 from models.enums import ResponseStatus
-from src.database.base import Base
+from database.base import Base
 
 class TaskResponseModel(Base):
     __tablename__ = 'task_responses'

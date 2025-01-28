@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, Enum, Numeric
 from sqlalchemy.orm import relationship
 
-from src.database.base import Base
+from database.base import Base
 
 
 class SubscriptionPlanModel(Base):

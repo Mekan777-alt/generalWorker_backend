@@ -1,6 +1,6 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, Boolean, Text, DateTime
+from sqlalchemy import Column, Integer, ForeignKey, Boolean, Text, DateTime
 from sqlalchemy.orm import relationship
-from src.database.base import Base
+from database.base import Base
 from datetime import datetime
 
 class ReviewModel(Base):

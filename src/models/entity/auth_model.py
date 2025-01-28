@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Integer, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from src.database.base import Base
+from database.base import Base
 
 
 class AuthModel(Base):

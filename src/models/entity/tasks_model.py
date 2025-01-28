@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import Column, String, Integer, NUMERIC, DateTime, ForeignKey, Boolean, Enum
 from sqlalchemy.orm import relationship
 from models.enums import TasksStatusEnum
-from src.database.base import Base
+from database.base import Base
 
 class TasksModel(Base):
     __tablename__ = 'tasks'

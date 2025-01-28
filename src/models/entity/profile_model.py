@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
-from src.database.base import Base
+from database.base import Base
 
 
 class UserProfileModel(Base):
