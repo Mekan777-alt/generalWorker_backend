@@ -17,24 +17,6 @@ services:
     networks:
       - workers_network
 
-  centrifugo:
-    image: centrifugo/centrifugo:v5
-    container_name: workers_centrifugo
-    restart: always
-    depends_on:
-      - redis
-    command: centrifugo -c /centrifugo/config.json --engine=redis --redis_address=redis://redis:6379
-    ports:
-      - "8000:8000"
-    ulimits:
-      nofile:
-        soft: 65535
-        hard: 65535
-    volumes:
-      - ./centrifugo:/centrifugo
-    networks:
-      - workers_network
-
   redis:
     image: redis:alpine
     container_name: workers_redis
@@ -63,6 +45,35 @@ services:
     networks:
       - workers_network
 
+  notification_service:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: notification
+    restart: always
+    depends_on:
+      - db
+      - rabbitmq
+      - api_service
+    command: sh /app/utils/start_notification.sh
+    networks:
+      - workers_network
+
+  rabbitmq:
+    image: rabbitmq:3.11-management  # Обновлённая версия RabbitMQ
+    container_name: workers_rabbitmq
+    ports:
+      - "5672:5672"      # Основной порт для AMQP
+      - "15672:15672"    # Порт для веб-интерфейса управления
+    networks:
+      - workers_network
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: always
+
 
 networks:
   workers_network:
@@ -73,3 +84,5 @@ volumes:
     name: postgres_data
   redis_data:
     name: redis_data
+  rabbitmq_data:
+    name: rabbitmq_data

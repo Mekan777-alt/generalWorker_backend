@@ -26,8 +26,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Инициализация Redis
     redis = aioredis.from_url(
         url=f"redis://{settings.redis_settings.host}:{settings.redis_settings.port}",
-        username=settings.redis_settings.username,
-        password=settings.redis_settings.password,
         encoding="utf-8",
         decode_responses=True
     )

@@ -1,5 +1,8 @@
+import json
 import locale
 from datetime import datetime, timedelta
+
+import aio_pika
 from fastapi import Depends, HTTPException, BackgroundTasks
 from starlette import status
 
@@ -7,6 +10,7 @@ from api.dto.tasks_dto import (TaskRequestDTO, TaskResponseDTO, CreateResponseTa
                                ResponseByTaskIdDTO, CustomerResponseDTO)
 from api.firebase.utils import db
 from api.repositories.tasks_repository import get_tasks_repository, TasksRepository
+from core.config import settings
 from models.entity import TasksModel, TaskResponseModel
 from models.enums import RolesEnum, TasksStatusEnum, ResponseStatus
 from babel.dates import format_date
@@ -169,6 +173,15 @@ class TasksService:
         )
 
         task = await self.tasks_repository.create_task(new_task)
+
+        await self._send_to_rabbitmq(
+            {
+                "task_id": task.id,
+                "title": task.name,
+                "body": task.description,
+                "image": "http://31.129.108.27:9000/photos/default/Logo.png"
+            }
+        )
 
         return TaskResponseDTO(
             id=task.id,
@@ -477,6 +490,30 @@ class TasksService:
         # Обновление room_uuid в TaskResponseModel
         response.room_uuid = new_room_ref.id
         await self.tasks_repository.update_task_response(response)
+
+    async def _send_to_rabbitmq(self, message: dict):
+        try:
+            # Подключение к RabbitMQ (добавляем await!)
+            connection = await aio_pika.connect_robust("amqp://workers_rabbitmq")
+
+            # Открываем канал в асинхронном контексте
+            async with connection:
+                channel = await connection.channel()
+
+                # Объявление очереди
+                await channel.declare_queue("notifications", durable=True)
+
+                # Отправка сообщения в очередь
+                await channel.default_exchange.publish(
+                    aio_pika.Message(
+                        body=json.dumps(message).encode(),
+                        delivery_mode=aio_pika.DeliveryMode.PERSISTENT  # Сообщение сохраняется на диске
+                    ),
+                    routing_key="notifications",
+                )
+
+        except Exception as e:
+            print(e)
 
 def get_tasks_service(tasks_repository: TasksRepository = Depends(get_tasks_repository)):
     return TasksService(tasks_repository)

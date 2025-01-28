@@ -30,6 +30,7 @@ class AuthService:
                 phoneNumber=encrypted_phone,
                 otpCode=verification_code,
                 otpExpiry=datetime.utcnow() + timedelta(minutes=5),
+                token=request.token
             )
 
             await self.auth_repository.create_user(user)
@@ -78,6 +79,7 @@ class AuthService:
 
         auth.otpCode = verification_code
         auth.otpExpiry = datetime.utcnow() + timedelta(minutes=5)
+        auth.token = request.token
 
         await self.auth_repository.update_user(auth)
 

@@ -33,6 +33,7 @@ class AuthUserDTO(BaseModel):
                              description="Выбранная роль при авторизации пользователя")
     phoneNumber: str = Field(..., examples=["+71234567890"],
                              description="Номер телефона в формате +7 и 10 цифр")
+    token: str = Field(..., examples=["Токен приложения"],)
 
     @field_validator('phoneNumber')
     def validate_phone_number(cls, v):

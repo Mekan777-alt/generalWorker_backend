@@ -34,8 +34,8 @@ class DevinoTelecomSettings(BaseSettings):
 class RedisSettings(BaseSettings):
     host: str = Field(..., validation_alias='REDIS_HOST')
     port: int = Field(..., validation_alias='REDIS_PORT')
-    username: str = Field(..., validation_alias='REDIS_USERNAME')
-    password: str = Field(..., validation_alias='REDIS_PASSWORD')
+    # username: str = Field(..., validation_alias='REDIS_USERNAME')
+    # password: str = Field(..., validation_alias='REDIS_PASSWORD')
 
     @property
     def uri(self) -> str:

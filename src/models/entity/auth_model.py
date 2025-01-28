@@ -15,6 +15,7 @@ class AuthModel(Base):
     updatedAt = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False,
                         comment="Дата последнего обновления записи")
     isActive = Column(Boolean, default=False)
+    token = Column(String, nullable=True)
 
     user_profile = relationship("UserProfileModel", back_populates="auth", uselist=False, cascade="all, delete-orphan")
     # user_roles = relationship('UserRolesModel', back_populates='auth', cascade="all, delete-orphan")
