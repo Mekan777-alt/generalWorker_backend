@@ -1,8 +1,8 @@
-"""init migrations
+"""initial migrations
 
-Revision ID: 1b1a4e959bb2
+Revision ID: 3d809a4d04bd
 Revises: 
-Create Date: 2025-01-19 11:46:23.290105
+Create Date: 2025-01-31 15:46:15.819331
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '1b1a4e959bb2'
+revision: str = '3d809a4d04bd'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -88,7 +88,7 @@ def upgrade() -> None:
     sa.Column('term_to', sa.DateTime(), nullable=False),
     sa.Column('location', sa.String(), nullable=False),
     sa.Column('is_public', sa.Boolean(), nullable=True),
-    sa.Column('status', sa.Enum('SEARCH', 'WORK', 'COMPLETED', 'CANCELLED', name='tasksstatusenum'), nullable=True),
+    sa.Column('status', sa.Enum('SEARCH', 'WORK', 'COMPLETED', 'CANCELLED', 'UNDER_REVIEW', name='tasksstatusenum'), nullable=True),
     sa.Column('customer_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['customer_id'], ['user_profile.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
@@ -97,6 +97,7 @@ def upgrade() -> None:
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('role_id', sa.Integer(), nullable=False),
     sa.Column('is_use', sa.Boolean(), nullable=True),
+    sa.Column('token', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['role_id'], ['roles.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user_profile.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('user_id', 'role_id')
@@ -126,6 +127,7 @@ def upgrade() -> None:
     sa.Column('task_id', sa.Integer(), nullable=False),
     sa.Column('executor_id', sa.Integer(), nullable=False),
     sa.Column('text', sa.String(), nullable=True),
+    sa.Column('status', sa.Enum('REJECTED', 'ACCEPTED', 'EXPECTATION', name='responsestatus'), nullable=True),
     sa.Column('response_date', sa.DateTime(), nullable=True),
     sa.Column('room_uuid', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['executor_id'], ['user_profile.id'], ondelete='CASCADE'),

@@ -30,7 +30,6 @@ class AuthService:
                 phoneNumber=encrypted_phone,
                 otpCode=verification_code,
                 otpExpiry=datetime.utcnow() + timedelta(minutes=5),
-                token=request.token
             )
 
             await self.auth_repository.create_user(user)
@@ -55,6 +54,8 @@ class AuthService:
                     user_id=profile.id,
                     role_id=role.id,
                     is_use=is_use,
+                    token=request.token if is_use else None
+
                 )
                 user_role.append(new_role)
 
