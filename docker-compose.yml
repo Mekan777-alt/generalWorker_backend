@@ -88,6 +88,7 @@ services:
 
 networks:
   workers_network:
+    name: workers_network
     driver: bridge
 
 volumes:
