@@ -53,7 +53,7 @@ async def callback(message: aio_pika.IncomingMessage):
                     users = await get_users_by_city(task.location, session)
                     for user in users:
                         await send_notification(
-                            token=user.auth.token,
+                            token=user.user_roles.token,
                             title=msg_body["title"],
                             body=msg_body["body"],
                             image=msg_body["image"],
@@ -68,7 +68,7 @@ async def callback(message: aio_pika.IncomingMessage):
 async def get_users_by_city(city: str, session: AsyncSession):
     result = await session.execute(
         select(UserProfileModel)
-        .options(joinedload(UserProfileModel.auth))
+        .options(joinedload(UserProfileModel.user_roles))
         .where(UserProfileModel.location == city)
     )
     return result.scalars().all()
