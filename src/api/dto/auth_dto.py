@@ -54,3 +54,4 @@ class AuthRefreshTokenDTO(BaseModel):
 class UpdateRoleRequestDTO(BaseModel):
     role: str = Field(..., examples=["Customer", "Executor"],
                       description="Смена роли")
+    token: str = Field(..., description="Токен")

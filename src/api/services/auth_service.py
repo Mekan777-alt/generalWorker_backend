@@ -75,8 +75,10 @@ class AuthService:
 
             if user_role.role.name == request.role:
                 user_role.is_use = True
+                user_role.token = request.token
             else:
                 user_role.is_use = False
+                user_role.token = None
 
         auth.otpCode = verification_code
         auth.otpExpiry = datetime.utcnow() + timedelta(minutes=5)
@@ -208,6 +210,8 @@ class AuthService:
 
         if use_role:
             use_role.is_use = False
+            use_role.token = None
+
             await self.auth_repository.update_roles(use_role)
 
         new_role = await self.auth_repository.get_role_by_name(data.role)
@@ -228,6 +232,7 @@ class AuthService:
             )
 
         new_role_relation.is_use = True
+        new_role_relation.token = data.token
         await self.auth_repository.update_roles(new_role)
 
         user_data = {"id": auth_id, "phoneNumber": phone_number, "role_id": new_role.id}
