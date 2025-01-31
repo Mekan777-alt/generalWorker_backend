@@ -47,11 +47,14 @@ async def callback(message: aio_pika.IncomingMessage):
         try:
             async with async_session_maker() as session:
                 msg_body = json.loads(message.body.decode())
+                print(f"Сообщение: {msg_body}")
 
                 task = await get_task_by_id(msg_body["task_id"], session)
+                print(f"{task.id} - name: {task.name} найдена")
                 if task:
                     users = await get_users_by_city(task.location, session)
                     for user in users:
+                        print(user.first_name)
                         await send_notification(
                             token=user.user_roles.token,
                             title=msg_body["title"],
@@ -78,6 +81,7 @@ async def get_users_by_city(city: str, session: AsyncSession):
 async def start_worker():
     try:
         connection = await aio_pika.connect_robust("amqp://workers_rabbitmq")
+        print("Connected to RabbitMQ")
         channel = await connection.channel()
 
         # Объявление очереди
