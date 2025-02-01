@@ -80,7 +80,7 @@ async def get_users_by_city(city: str, session: AsyncSession):
 # Функция для запуска асинхронного worker
 async def start_worker():
     try:
-        connection = await aio_pika.connect_robust("amqp://guest:guest@workers_rabbitmq:5672")
+        connection = await aio_pika.connect_robust("amqp://workers_rabbitmq:5672")
         print("Connected to RabbitMQ")
         channel = await connection.channel()
 
