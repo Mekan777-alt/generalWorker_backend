@@ -493,8 +493,7 @@ class TasksService:
 
     async def _send_to_rabbitmq(self, message: dict):
         try:
-            # Подключение к RabbitMQ (добавляем await!)
-            connection = await aio_pika.connect_robust("amqp://workers_rabbitmq")
+            connection = await aio_pika.connect_robust("amqp://workers_rabbitmq:5672")
 
             # Открываем канал в асинхронном контексте
             async with connection:
