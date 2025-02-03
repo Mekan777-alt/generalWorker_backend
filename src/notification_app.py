@@ -80,7 +80,7 @@ async def get_users_by_city(city: str, session: AsyncSession):
 # Функция для запуска асинхронного worker
 async def start_worker():
     try:
-        connection = await aio_pika.connect_robust("amqp://workers_rabbitmq:5672")
+        connection = await aio_pika.connect_robust("amqp://31.129.108.27:5672")
         print("Connected to RabbitMQ")
         channel = await connection.channel()
 
@@ -96,7 +96,7 @@ async def start_worker():
 
 
 if __name__ == "__main__":
-    cred = credentials.Certificate(f"{os.getcwd()}/app-freelance-f3dee-firebase-adminsdk-8d92q-53823e41e1.json")
+    cred = credentials.Certificate(f"{os.getcwd()}/app-freelance-f3dee-firebase-adminsdk-8d92q-f8deea39b3.json")
     firebase_admin.initialize_app(cred)
     print("Connected to Firebase")
     asyncio.run(start_worker())
