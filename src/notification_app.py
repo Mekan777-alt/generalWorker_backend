@@ -116,7 +116,7 @@ async def start_worker():
 
 
 if __name__ == "__main__":
-    cred = credentials.Certificate(f"/Users/mekanmededov/PycharmProjects/generalWorker_backend/app-freelance-f3dee-firebase-adminsdk-8d92q-f8deea39b3.json")
+    cred = credentials.Certificate(f"{os.getcwd()}/app-freelance-f3dee-firebase-adminsdk-8d92q-f8deea39b3.json")
     firebase_admin.initialize_app(cred)
     print("Connected to Firebase")
     asyncio.run(start_worker())
