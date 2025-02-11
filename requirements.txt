@@ -78,6 +78,7 @@ python-dotenv==1.0.1
 python-jose==3.3.0
 python-jwt==4.1.0
 python-multipart==0.0.17
+pytz==2025.1
 redis==5.2.0
 requests==2.32.3
 requests-toolbelt==0.10.1
