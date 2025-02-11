@@ -1,9 +1,10 @@
 import json
 import locale
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import pytz
 import aio_pika
 from fastapi import Depends, HTTPException, BackgroundTasks
+from firebase_admin import firestore
 from starlette import status
 
 from api.dto.tasks_dto import (TaskRequestDTO, TaskResponseDTO, CreateResponseTaskByIdDTO,
@@ -449,7 +450,7 @@ class TasksService:
             "executor_id": executor.id,
             "customer_id": task.customer_id,
             "response_id": response.id,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": firestore.firestore.SERVER_TIMESTAMP,
             "is_response": True,
         }
         new_room_ref = rooms_ref.document()
@@ -460,7 +461,7 @@ class TasksService:
         new_message_data = {
             "senderId": executor.id,  # Автор сообщения — исполнитель
             "content": data.text,
-            "created_at": await self.format_created_at(datetime.utcnow(), tz_offset=3)
+            "created_at": firestore.firestore.SERVER_TIMESTAMP,
         }
         new_message_ref = messages_ref.document()
         new_message_ref.set(new_message_data)
@@ -468,11 +469,6 @@ class TasksService:
         # Обновление room_uuid в TaskResponseModel
         response.room_uuid = new_room_ref.id
         await self.tasks_repository.update_task_response(response)
-
-    async def format_created_at(self, dt: datetime, tz_offset: int = 3) -> str:
-        local_tz = pytz.FixedOffset(tz_offset * 60)  # Конвертируем смещение в минуты
-        dt_local = dt.replace(tzinfo=pytz.utc).astimezone(local_tz)  # Конвертируем в нужный часовой пояс
-        return dt_local.strftime("%B %-d, %Y at %I:%M:%S %p UTC%z").replace("UTC+0000", "UTC")
 
     async def _send_to_rabbitmq(self, message: dict):
         try:
