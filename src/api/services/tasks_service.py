@@ -1,7 +1,7 @@
 import json
 import locale
 from datetime import datetime, timedelta
-
+import pytz
 import aio_pika
 from fastapi import Depends, HTTPException, BackgroundTasks
 from starlette import status
@@ -14,6 +14,8 @@ from core.config import settings
 from models.entity import TasksModel, TaskResponseModel
 from models.enums import RolesEnum, TasksStatusEnum, ResponseStatus
 from babel.dates import format_date
+
+
 
 class TasksService:
     def __init__(self, tasks_repository: TasksRepository):
@@ -290,31 +292,6 @@ class TasksService:
                 detail="Отклик уже отправлен"
             )
 
-        # # Проверка на существование комнаты
-        # rooms_ref = db.collection("rooms")
-        #
-        # # Создание комнаты
-        # new_room_data = {
-        #     "name": task.name,
-        #     "task_id": task_id,
-        #     "executor_id": executor.id,
-        #     "customer_id": task.customer_id,
-        #     "created_at": datetime.utcnow().isoformat(),
-        #     "is_response": True,
-        # }
-        # new_room_ref = rooms_ref.document()
-        # new_room_ref.set(new_room_data)
-        #
-        # # Создание сообщения
-        # messages_ref = new_room_ref.collection("messages")
-        # new_message_data = {
-        #     "senderId": executor.id,  # Автор сообщения — исполнитель
-        #     "content": data.text,
-        #     "created_at": datetime.utcnow().isoformat()
-        # }
-        # new_message_ref = messages_ref.document()
-        # new_message_ref.set(new_message_data)
-
         new_response = TaskResponseModel(
             task_id=task_id,
             executor_id=executor.id,
@@ -471,6 +448,7 @@ class TasksService:
             "task_id": task.id,
             "executor_id": executor.id,
             "customer_id": task.customer_id,
+            "response_id": response.id,
             "created_at": datetime.utcnow().isoformat(),
             "is_response": True,
         }
@@ -482,7 +460,7 @@ class TasksService:
         new_message_data = {
             "senderId": executor.id,  # Автор сообщения — исполнитель
             "content": data.text,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": self.format_created_at(datetime.utcnow(), tz_offset=3)
         }
         new_message_ref = messages_ref.document()
         new_message_ref.set(new_message_data)
@@ -490,6 +468,11 @@ class TasksService:
         # Обновление room_uuid в TaskResponseModel
         response.room_uuid = new_room_ref.id
         await self.tasks_repository.update_task_response(response)
+
+    async def format_created_at(self, dt: datetime, tz_offset: int = 3) -> str:
+        local_tz = pytz.FixedOffset(tz_offset * 60)  # Конвертируем смещение в минуты
+        dt_local = dt.replace(tzinfo=pytz.utc).astimezone(local_tz)  # Конвертируем в нужный часовой пояс
+        return dt_local.strftime("%B %-d, %Y at %I:%M:%S %p UTC%z").replace("UTC+0000", "UTC")
 
     async def _send_to_rabbitmq(self, message: dict):
         try:

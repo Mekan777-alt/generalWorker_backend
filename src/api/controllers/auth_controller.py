@@ -11,7 +11,8 @@ router = APIRouter(
 )
 
 
-@router.post('/auth', status_code=status.HTTP_200_OK, response_model=VerifyCode,
+@router.post('/auth',
+             status_code=status.HTTP_200_OK,
              summary="Авторизация пользователя")
 async def auth_endpoint(request: AuthUserDTO, service: AuthService = Depends(get_auth_service)):
     return await service.auth_user(request)

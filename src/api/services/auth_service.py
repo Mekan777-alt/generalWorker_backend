@@ -61,6 +61,15 @@ class AuthService:
 
             await self.auth_repository.create_role_to_user(user_role)
 
+            # send_message = await self.__send_message(request.phoneNumber[1:], verification_code)
+
+            # if not send_message:
+            #     raise HTTPException(
+            #         detail="Не удалось отправить SMS",
+            #         status_code=status.HTTP_400_BAD_REQUEST
+            #     )
+
+            # return {"message": "Отправлен код подтверждения"}
             return VerifyCode(verificationCode=verification_code)
 
         # send_message = await self.__send_message(request.phoneNumber[1:], verification_code)
@@ -85,6 +94,9 @@ class AuthService:
         auth.token = request.token
 
         await self.auth_repository.update_user(auth)
+
+
+        # return {"message": "Отправлен код подтверждения"}
 
         return VerifyCode(verificationCode=verification_code)
 
