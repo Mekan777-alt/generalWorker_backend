@@ -460,7 +460,7 @@ class TasksService:
         new_message_data = {
             "senderId": executor.id,  # Автор сообщения — исполнитель
             "content": data.text,
-            "created_at": self.format_created_at(datetime.utcnow(), tz_offset=3)
+            "created_at": await self.format_created_at(datetime.utcnow(), tz_offset=3)
         }
         new_message_ref = messages_ref.document()
         new_message_ref.set(new_message_data)
