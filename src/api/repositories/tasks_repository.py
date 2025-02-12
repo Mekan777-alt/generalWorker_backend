@@ -249,7 +249,7 @@ class TasksRepository:
                 TasksModel.responses.has(
                     TaskResponseModel.executor_id == executor_id
                 ),
-                TasksModel.status.in_([TasksStatusEnum.WORK])
+                TasksModel.status.in_([TasksStatusEnum.SEARCH, TasksStatusEnum.WORK])
             )
         )
         return result.unique().scalars().all()
@@ -265,6 +265,7 @@ class TasksRepository:
                 ~TasksModel.id.in_(subquery),  # Инверсия условия IN
                 TasksModel.customer_id != executor_id  # Условие "не равно"
             )
+            .order_by(TasksModel.id.desc())
         )
         return result.scalars().all()
 

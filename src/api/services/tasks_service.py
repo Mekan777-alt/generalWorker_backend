@@ -116,20 +116,41 @@ class TasksService:
                 tasks_array = []
 
                 for task in tasks:
-                    tasks_array.append(
-                        TaskResponseDTO(
-                            id=task.id,
-                            taskName=task.name,
-                            taskDescription=task.description,
-                            taskPrice=task.price,
-                            taskTerm=self.__format_duration(task.term_from, task.term_to),
-                            taskCreated=self.__format_date(task.term_from),
-                            taskCity=task.location,
-                            isPublic=task.is_public,
-                            roomUUID=task.responses.room_uuid,
-                            taskStatus=self._formated_status(task.status),
+
+                    if task.status == TasksStatusEnum.SEARCH:
+
+                        firestore_task = await self.__search_task_in_firestore(task.id, user_info.id)
+
+                        if firestore_task:
+                            tasks_array.append(
+                                TaskResponseDTO(
+                                    id=task.id,
+                                    taskName=task.name,
+                                    taskDescription=task.description,
+                                    taskPrice=task.price,
+                                    taskTerm=self.__format_duration(task.term_from, task.term_to),
+                                    taskCreated=self.__format_date(task.term_from),
+                                    taskCity=task.location,
+                                    isPublic=task.is_public,
+                                    roomUUID=task.responses.room_uuid,
+                                    taskStatus=self._formated_status(task.status),
+                                )
+                            )
+                    else:
+                        tasks_array.append(
+                            TaskResponseDTO(
+                                id=task.id,
+                                taskName=task.name,
+                                taskDescription=task.description,
+                                taskPrice=task.price,
+                                taskTerm=self.__format_duration(task.term_from, task.term_to),
+                                taskCreated=self.__format_date(task.term_from),
+                                taskCity=task.location,
+                                isPublic=task.is_public,
+                                roomUUID=task.responses.room_uuid,
+                                taskStatus=self._formated_status(task.status),
+                            )
                         )
-                    )
                 return tasks_array
 
         if not tasks:
@@ -147,6 +168,7 @@ class TasksService:
                     taskCreated=self.__format_date(task.term_from),
                     taskCity=task.location,
                     isPublic=task.is_public,
+
                     taskStatus=self._formated_status(task.status),
                 )
             )
@@ -437,6 +459,19 @@ class TasksService:
         else:
             return "Неизвестный статус"
 
+    async def __search_task_in_firestore(self, task_id: int, executor_id: int):
+        rooms_ref = db.collection("rooms")
+        query = (
+            rooms_ref
+            .where("task_id", "==", task_id)
+            .where("executor_id", "==", executor_id)
+            .where("is_response", "==", False)  # Фильтр по is_response
+        )
+        docs = query.stream()
+
+        return any(docs)
+
+
     async def __create_room_and_message(self, task, executor, data, response):
         """
         Создание комнаты и сообщения в Firebase Firestore.
@@ -451,7 +486,7 @@ class TasksService:
             "customer_id": task.customer_id,
             "response_id": response.id,
             "created_at": firestore.firestore.SERVER_TIMESTAMP,
-            "is_response": True,
+            "is_response": True, # если true, то это отклик если false, то уже переписка
         }
         new_room_ref = rooms_ref.document()
         new_room_ref.set(new_room_data)
