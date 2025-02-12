@@ -234,6 +234,7 @@ class TasksRepository:
     async def get_open_tasks(self, user_id: int):
         result = await self.session.execute(
             select(TasksModel)
+            .options(joinedload(TasksModel.responses))
             .where(
                 TasksModel.customer_id == user_id,
                 TasksModel.status.notin_([TasksStatusEnum.CANCELLED, TasksStatusEnum.COMPLETED])
