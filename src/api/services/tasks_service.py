@@ -168,7 +168,7 @@ class TasksService:
                     taskCreated=self.__format_date(task.term_from),
                     taskCity=task.location,
                     isPublic=task.is_public,
-                    roomUUID=task.responses.room_uuid if task.responses.room_uuid else None,
+                    roomUUID=task.responses.room_uuid if task.responses and task.responses.room_uuid else None,
                     taskStatus=self._formated_status(task.status),
                 )
             )
